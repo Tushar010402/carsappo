@@ -130,3 +130,13 @@ export function formObject(formData: FormData) {
   }
   return out;
 }
+
+/** <input type="datetime-local"> value interpreted as India time (IST); empty → null. */
+export const istDateTime = z.preprocess(
+  (v) => {
+    if (v === "" || v === undefined || v === null) return null;
+    if (typeof v === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v)) return new Date(`${v}:00+05:30`);
+    return v;
+  },
+  z.date({ error: "Enter a valid date and time" }).nullable(),
+);

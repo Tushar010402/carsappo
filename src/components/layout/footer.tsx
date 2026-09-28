@@ -35,7 +35,7 @@ export function Footer({
             {store.tagline} Premium car accessories and car care products delivered across India, and daily car cleaning in Greater Noida.
           </p>
           <p className="mt-8 font-display text-sm font-semibold">Join the Carsappo club</p>
-          <p className="mt-1 text-xs text-zinc-500">Car care tips, new launches and member-only offers. No spam.</p>
+          <p className="mt-1 text-xs text-zinc-400">Car care tips, new launches and member-only offers. No spam.</p>
           <NewsletterForm />
           {socials.length > 0 && (
             <div className="mt-6 flex gap-2">
@@ -130,7 +130,7 @@ export function Footer({
         </div>
       </div>
       <div className="border-t border-white/10">
-        <div className="container-x flex flex-col gap-3 py-6 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
+        <div className="container-x flex flex-col gap-3 py-6 text-xs text-zinc-400 sm:flex-row sm:items-center sm:justify-between">
           <p>
             © {new Date().getFullYear()} {store.legalName || store.name}. All rights reserved.{store.gstin ? ` · GSTIN ${store.gstin}` : ""}
           </p>

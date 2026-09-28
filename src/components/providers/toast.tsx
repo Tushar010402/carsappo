@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { create } from "zustand";
 import { CheckCircle2, CircleAlert, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -30,8 +31,28 @@ export function toast(message: string, tone: Toast["tone"] = "success", action?:
 
 export function Toaster() {
   const { toasts, dismiss } = useToast();
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Render in the browser's top layer (popover) so toasts stay visible above open modal <dialog>s.
+  // Re-showing moves it to the top of the top-layer stack each time a toast arrives.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof el.showPopover !== "function") return;
+    try {
+      if (el.matches(":popover-open")) el.hidePopover();
+      if (toasts.length) el.showPopover();
+    } catch {
+      /* popover unsupported — falls back to fixed positioning */
+    }
+  }, [toasts]);
+
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-4 z-[100] flex flex-col items-center gap-2 px-4 sm:bottom-6" aria-live="polite">
+    <div
+      ref={ref}
+      popover="manual"
+      className="pointer-events-none fixed inset-x-0 top-auto bottom-4 z-[100] m-0 flex h-auto w-full max-w-none flex-col items-center gap-2 overflow-visible border-0 bg-transparent p-0 px-4 sm:bottom-6 [&:not(:popover-open)]:hidden"
+      aria-live="polite"
+    >
       {toasts.map((t) => (
         <div
           key={t.id}

@@ -24,7 +24,8 @@ export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 export const MAX_VIDEO_BYTES = 40 * 1024 * 1024;
 
 export function uploadDir() {
-  return path.resolve(process.env.UPLOAD_DIR || path.join(process.cwd(), "uploads"));
+  // Runtime upload folder, not a build input — excluded from output file tracing.
+  return path.resolve(/* turbopackIgnore: true */ process.env.UPLOAD_DIR || path.join(/* turbopackIgnore: true */ process.cwd(), "uploads"));
 }
 
 function s3Enabled() {

@@ -69,3 +69,9 @@ export function currentMonthRange(date = new Date()) {
   const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
   return { from: `${today.slice(0, 7)}-01`, to: `${today.slice(0, 7)}-${String(last).padStart(2, "0")}`, month: `${y}-${String(m).padStart(2, "0")}` };
 }
+
+/** Date → "YYYY-MM-DDTHH:mm" in IST, for <input type="datetime-local">. */
+export function toIstInput(date: Date | null | undefined) {
+  if (!date) return "";
+  return new Date(date.getTime() + IST_OFFSET_MS).toISOString().slice(0, 16);
+}

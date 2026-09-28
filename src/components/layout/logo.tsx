@@ -18,9 +18,21 @@ export function Logo({ className, light, logoUrl }: { className?: string; light?
               <circle cx="16.5" cy="19" r="1.6" />
             </svg>
           </span>
-          <span className={cn("font-display text-xl font-bold tracking-[0.08em]", light ? "text-white" : "text-ink")}>
-            CARS<span className="text-brand-dark">APPO</span>
-          </span>
+          {/* Wordmark rendered as an SVG logo image (brand yellow is decorative, not body text). */}
+          <svg viewBox="0 0 124 24" className="h-6 w-auto" role="img" aria-label="Carsappo">
+            <text
+              x="0"
+              y="19.5"
+              textLength="123"
+              lengthAdjust="spacing"
+              style={{ fontFamily: "var(--font-poppins), sans-serif" }}
+              fontSize="21"
+              fontWeight="700"
+              fill={light ? "#ffffff" : "#0a0a0a"}
+            >
+              CARS<tspan fill={light ? "#ffc800" : "#e6b400"}>APPO</tspan>
+            </text>
+          </svg>
         </>
       )}
     </Link>

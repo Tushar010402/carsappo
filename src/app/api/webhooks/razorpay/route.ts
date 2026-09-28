@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     payload: {
       payment?: { entity: { id: string; order_id: string; error_description?: string } };
       order?: { entity: { id: string } };
-      refund?: { entity: { payment_id: string } };
+      refund?: { entity: { payment_id: string; amount: number } };
     };
   };
 
@@ -45,8 +45,14 @@ export async function POST(req: NextRequest) {
       break;
     }
     case "refund.processed": {
-      const paymentId = event.payload.refund?.entity.payment_id;
-      if (paymentId) await prisma.order.updateMany({ where: { razorpayPaymentId: paymentId }, data: { paymentStatus: "REFUNDED" } });
+      // Refunds started from the admin panel are already recorded; this catches ones issued from the Razorpay dashboard.
+      const refund = event.payload.refund?.entity;
+      if (refund?.payment_id) {
+        const order = await prisma.order.findFirst({ where: { razorpayPaymentId: refund.payment_id } });
+        if (order && order.paymentStatus === "PAID" && refund.amount >= order.total - order.refundedAmount) {
+          await prisma.order.update({ where: { id: order.id }, data: { paymentStatus: "REFUNDED", refundedAmount: order.total } });
+        }
+      }
       break;
     }
   }

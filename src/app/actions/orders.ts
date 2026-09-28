@@ -33,7 +33,7 @@ export async function cancelOrder(_: FormState, formData: FormData): Promise<For
   if (order.paymentStatus === "PAID" && order.razorpayPaymentId && razorpayEnabled()) {
     try {
       await refundRazorpayPayment(order.razorpayPaymentId);
-      await prisma.order.update({ where: { id: order.id }, data: { paymentStatus: "REFUNDED" } });
+      await prisma.order.update({ where: { id: order.id }, data: { paymentStatus: "REFUNDED", refundedAmount: order.total } });
       await prisma.orderEvent.create({ data: { orderId: order.id, status: "CANCELLED", note: "Refund initiated to original payment method" } });
     } catch (e) {
       console.error("[cancel] refund failed", e);

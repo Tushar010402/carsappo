@@ -16,7 +16,7 @@ export type PostCardData = {
 export function PostCard({ post, featured }: { post: PostCardData; featured?: boolean }) {
   return (
     <article className={cn("group", featured && "grid gap-6 lg:grid-cols-2 lg:items-center lg:gap-10")}>
-      <Link href={`/blog/${post.slug}`} className="relative block aspect-[16/9] overflow-hidden rounded-[var(--radius-card)] bg-ink">
+      <Link href={`/blog/${post.slug}`} tabIndex={-1} aria-hidden className="relative block aspect-[16/9] overflow-hidden rounded-[var(--radius-card)] bg-ink">
         {post.coverImage && (
           <SmartImage
             src={post.coverImage}

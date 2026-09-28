@@ -17,7 +17,7 @@ export default function AboutPage() {
         <Breadcrumbs items={[{ name: "About", path: "/about" }]} />
         <p className="eyebrow mt-10">About Carsappo</p>
         <h1 className="mt-4 max-w-4xl text-5xl leading-[1.05] font-semibold sm:text-6xl">
-          Everything your car needs. <span className="text-brand-dark">Nothing it doesn&apos;t.</span>
+          Everything your car needs. <span className="mt-3 inline-block rounded-lg bg-brand px-3 pb-1">Nothing it doesn&apos;t.</span>
         </h1>
         <p className="mt-6 max-w-2xl text-lg text-muted">
           Carsappo is a car care brand built for Indian roads and Indian car owners. We bring premium accessories and car care products to your doorstep anywhere in

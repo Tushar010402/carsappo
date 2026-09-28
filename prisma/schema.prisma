@@ -369,6 +369,7 @@ model Order {
   status            OrderStatus   @default(PENDING)
   paymentMethod     PaymentMethod
   paymentStatus     PaymentStatus @default(PENDING)
+  refundedAmount    Int           @default(0) // paise refunded so far (full or partial)
   razorpayOrderId   String?       @unique
   razorpayPaymentId String?
   // Stock is decremented exactly once when the order is confirmed.

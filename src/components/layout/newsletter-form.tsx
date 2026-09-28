@@ -16,7 +16,7 @@ export function NewsletterForm() {
           required
           placeholder="Your email address"
           aria-label="Email address"
-          className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-zinc-500"
+          className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-zinc-400"
         />
         <button
           disabled={pending}

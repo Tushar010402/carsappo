@@ -26,7 +26,7 @@ export function FilterBar({ action, children, resetHref, className }: { action: 
 
 export function SearchInput({ name = "q", defaultValue, placeholder = "Search…", className }: { name?: string; defaultValue?: string; placeholder?: string; className?: string }) {
   return (
-    <label className={cn("relative block min-w-52 flex-1", className)}>
+    <label className={cn("relative block w-full min-w-52 sm:w-auto sm:flex-1", className)}>
       <span className="sr-only">{placeholder}</span>
       <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
       <input type="search" name={name} defaultValue={defaultValue} placeholder={placeholder} className="field h-10 py-0 pl-9" />
@@ -37,9 +37,9 @@ export function SearchInput({ name = "q", defaultValue, placeholder = "Search…
 /** Select that re-submits its filter form immediately on change. */
 export function FilterSelect({ label, className, children, ...props }: ComponentProps<"select"> & { label: string }) {
   return (
-    <label className={cn("block", className)}>
+    <label className={cn("block min-w-[9rem] flex-1 sm:flex-none", className)}>
       <span className="mb-1 block text-[11px] font-semibold tracking-wide text-muted uppercase">{label}</span>
-      <Select {...props} className="h-10 min-w-36 py-0" onChange={(e) => e.currentTarget.form?.requestSubmit()}>
+      <Select {...props} className="h-10 py-0 sm:min-w-36" onChange={(e) => e.currentTarget.form?.requestSubmit()}>
         {children}
       </Select>
     </label>
@@ -48,7 +48,7 @@ export function FilterSelect({ label, className, children, ...props }: Component
 
 export function FilterDate({ label, name, defaultValue }: { label: string; name: string; defaultValue?: string }) {
   return (
-    <label className="block">
+    <label className="block min-w-[9rem] flex-1 sm:flex-none">
       <span className="mb-1 block text-[11px] font-semibold tracking-wide text-muted uppercase">{label}</span>
       <input type="date" name={name} defaultValue={defaultValue} className="field h-10 py-0" />
     </label>

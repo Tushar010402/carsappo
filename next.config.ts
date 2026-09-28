@@ -12,6 +12,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Always render <title>/<meta> in <head> (no metadata streaming) so every crawler and
+  // link-preview bot sees product SEO tags without executing JavaScript.
+  htmlLimitedBots: /.*/,
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
