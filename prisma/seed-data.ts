@@ -1062,7 +1062,7 @@ export const faqs = {
     ["Can I pause or cancel?", "Yes — pause for travel or cancel anytime with 3 days' notice before your next billing date."],
   ],
   SHIPPING: [
-    ["Do you deliver across India?", "Yes, we ship to 27,000+ pincodes across India through our courier partners."],
+    ["Do you deliver across India?", "Yes, we ship across India through our courier partners. Enter your pincode on any product page to check delivery time."],
     ["How long does delivery take?", "Delhi NCR: 1–3 days. Metro cities: 3–5 days. Rest of India: 4–7 days after dispatch."],
     ["Is Cash on Delivery available?", "Yes, COD is available on most pincodes for a small handling fee."],
   ],

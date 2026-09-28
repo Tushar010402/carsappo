@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /**
  * Seeds Carsappo with the starter catalogue and content.
  *   npm run db:seed                 → categories, brands, products, vehicles, services, FAQs, blog, admin user

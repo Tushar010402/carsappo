@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Form from "next/form";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -218,10 +218,12 @@ function FilterForm({ basePath, state, facets, makes, fixedCategory }: { basePat
 export function ShopFilters(props: { basePath: string; state: FilterState; facets: Facets; makes: VehicleTree; fixedCategory?: boolean; activeCount: number }) {
   const [open, setOpen] = useState(false);
   const key = JSON.stringify(props.state);
-
-  useEffect(() => {
+  const [appliedKey, setAppliedKey] = useState(key);
+  if (appliedKey !== key) {
+    // Filters changed (navigation finished) — close the mobile sheet.
+    setAppliedKey(key);
     setOpen(false);
-  }, [key]);
+  }
 
   return (
     <>

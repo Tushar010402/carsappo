@@ -5,11 +5,11 @@ import { Stars } from "@/components/ui/stars";
 import { WishlistButton } from "@/components/product/wishlist-button";
 import { QuickAddButton } from "@/components/product/add-to-cart";
 import type { ProductCardData } from "@/lib/catalog";
-import { cn } from "@/lib/utils";
+import { cn, isRecent } from "@/lib/utils";
 
 export function ProductCard({ product, className, priority }: { product: ProductCardData; className?: string; priority?: boolean }) {
   const [img1, img2] = product.images;
-  const isNew = Date.now() - new Date(product.createdAt).getTime() < 1000 * 60 * 60 * 24 * 21;
+  const isNew = isRecent(product.createdAt);
   const lowStock = product.stock > 0 && product.stock <= 5;
 
   return (

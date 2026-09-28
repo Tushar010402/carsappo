@@ -56,9 +56,8 @@ export function CheckoutView({
     if (/^\d{6}$/.test(address.pincode)) setPincode(address.pincode);
   }, [address.pincode, setPincode]);
 
-  useEffect(() => {
-    if (quote && !quote.codAvailable && method === "COD" && razorpayAvailable) setMethod("RAZORPAY");
-  }, [quote, method, razorpayAvailable]);
+  // Fall back to online payment when COD isn't available for this order.
+  const payMethod = method === "COD" && quote && !quote.codAvailable && razorpayAvailable ? "RAZORPAY" : method;
 
   const tracked = useRef(false);
   useEffect(() => {
@@ -110,7 +109,7 @@ export function CheckoutView({
           saveAddress: !!user && !addressId && saveAddress,
           gstin: wantsGst ? gstin : null,
           note: note || null,
-          paymentMethod: method,
+          paymentMethod: payMethod,
         }),
       });
       const data = await res.json();
@@ -233,11 +232,11 @@ export function CheckoutView({
             <label
               className={cn(
                 "flex cursor-pointer items-start gap-4 rounded-2xl border p-4 transition",
-                method === "RAZORPAY" ? "border-ink ring-1 ring-ink" : "border-line",
+                payMethod === "RAZORPAY" ? "border-ink ring-1 ring-ink" : "border-line",
                 !razorpayAvailable && "cursor-not-allowed opacity-50",
               )}
             >
-              <input type="radio" name="pay" className="mt-1 accent-ink" checked={method === "RAZORPAY"} disabled={!razorpayAvailable} onChange={() => setMethod("RAZORPAY")} />
+              <input type="radio" name="pay" className="mt-1 accent-ink" checked={payMethod === "RAZORPAY"} disabled={!razorpayAvailable} onChange={() => setMethod("RAZORPAY")} />
               <span className="flex-1">
                 <span className="flex items-center gap-2 font-semibold">
                   <CreditCard className="size-4" /> Pay online
@@ -249,11 +248,11 @@ export function CheckoutView({
             <label
               className={cn(
                 "flex cursor-pointer items-start gap-4 rounded-2xl border p-4 transition",
-                method === "COD" ? "border-ink ring-1 ring-ink" : "border-line",
+                payMethod === "COD" ? "border-ink ring-1 ring-ink" : "border-line",
                 quote && !quote.codAvailable && "cursor-not-allowed opacity-50",
               )}
             >
-              <input type="radio" name="pay" className="mt-1 accent-ink" checked={method === "COD"} disabled={!!quote && !quote.codAvailable} onChange={() => setMethod("COD")} />
+              <input type="radio" name="pay" className="mt-1 accent-ink" checked={payMethod === "COD"} disabled={!!quote && !quote.codAvailable} onChange={() => setMethod("COD")} />
               <span className="flex-1">
                 <span className="flex items-center gap-2 font-semibold">
                   <Banknote className="size-4" /> Cash on Delivery
@@ -314,7 +313,7 @@ export function CheckoutView({
           ) : (
             <Button size="lg" className="mt-6 w-full" onClick={placeOrder} disabled={submitting || loading || !quote}>
               {submitting ? <Loader2 className="size-4 animate-spin" /> : <Lock className="size-4" />}
-              {method === "COD" ? "Place order" : "Pay"} {quote ? formatINR(quote.total) : ""}
+              {payMethod === "COD" ? "Place order" : "Pay"} {quote ? formatINR(quote.total) : ""}
             </Button>
           )}
           <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted">

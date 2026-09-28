@@ -7,38 +7,37 @@ import { formatShortDate } from "@/lib/format";
 
 type Result = { serviceable: boolean; codAvailable: boolean; earliest: string; latest: string; zone: string } | { error: string };
 
+const VALID = /^[1-9]\d{5}$/;
+
 export function PincodeChecker({ weightGrams = 500 }: { weightGrams?: number }) {
   const savedPin = useCart((s) => s.pincode);
   const setPincode = useCart((s) => s.setPincode);
-  const [pin, setPin] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<Result | null>(null);
+  // null = untouched: fall back to the pincode remembered from an earlier check.
+  const [input, setInput] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<{ pin: string; data: Result } | null>(null);
 
-  const check = async (value: string) => {
-    if (!/^[1-9]\d{5}$/.test(value)) {
-      setResult({ error: "Enter a valid 6-digit pincode" });
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/pincode?pin=${value}&weight=${weightGrams / 1000}`);
-      const data = await res.json();
-      setResult(data);
-      if (res.ok) setPincode(value);
-    } catch {
-      setResult({ error: "Could not check right now. Please try again." });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const pin = input ?? savedPin ?? "";
+  const requested = submitted ?? (savedPin && VALID.test(savedPin) ? savedPin : null);
+  const loading = !!requested && result?.pin !== requested;
+  const shown = result && result.pin === requested ? result.data : null;
 
   useEffect(() => {
-    if (savedPin && !pin) {
-      setPin(savedPin);
-      void check(savedPin);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [savedPin]);
+    if (!requested) return;
+    let cancelled = false;
+    fetch(`/api/pincode?pin=${requested}&weight=${weightGrams / 1000}`)
+      .then(async (res) => {
+        const data = (await res.json()) as Result;
+        if (cancelled) return;
+        setResult({ pin: requested, data });
+        if (res.ok) setPincode(requested);
+      })
+      .catch(() => !cancelled && setResult({ pin: requested, data: { error: "Could not check right now. Please try again." } }));
+    return () => {
+      cancelled = true;
+    };
+  }, [requested, weightGrams, setPincode]);
 
   return (
     <div className="rounded-2xl border border-line p-4">
@@ -49,12 +48,17 @@ export function PincodeChecker({ weightGrams = 500 }: { weightGrams?: number }) 
         className="mt-3 flex gap-2"
         onSubmit={(e) => {
           e.preventDefault();
-          void check(pin);
+          if (!VALID.test(pin)) {
+            setError("Enter a valid 6-digit pincode");
+            return;
+          }
+          setError(null);
+          setSubmitted(pin);
         }}
       >
         <input
           value={pin}
-          onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+          onChange={(e) => setInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
           inputMode="numeric"
           placeholder="Enter pincode"
           aria-label="Delivery pincode"
@@ -64,21 +68,26 @@ export function PincodeChecker({ weightGrams = 500 }: { weightGrams?: number }) 
           {loading ? <Loader2 className="size-4 animate-spin" /> : "Check"}
         </button>
       </form>
-      {result &&
-        ("error" in result ? (
+      {error ? (
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-danger">
+          <CircleAlert className="size-3.5" /> {error}
+        </p>
+      ) : shown ? (
+        "error" in shown ? (
           <p className="mt-2 flex items-center gap-1.5 text-xs text-danger">
-            <CircleAlert className="size-3.5" /> {result.error}
+            <CircleAlert className="size-3.5" /> {shown.error}
           </p>
-        ) : result.serviceable ? (
+        ) : shown.serviceable ? (
           <div className="mt-3 space-y-1 text-sm">
             <p className="flex items-center gap-1.5 font-medium text-success">
-              <CheckCircle2 className="size-4" /> Delivery by {formatShortDate(result.earliest)} – {formatShortDate(result.latest)}
+              <CheckCircle2 className="size-4" /> Delivery by {formatShortDate(shown.earliest)} – {formatShortDate(shown.latest)}
             </p>
-            <p className="text-xs text-muted">{result.codAvailable ? "Cash on delivery available" : "Prepaid orders only for this pincode"}</p>
+            <p className="text-xs text-muted">{shown.codAvailable ? "Cash on delivery available" : "Prepaid orders only for this pincode"}</p>
           </div>
         ) : (
           <p className="mt-2 text-xs text-danger">Sorry, we don&apos;t deliver to this pincode yet.</p>
-        ))}
+        )
+      ) : null}
     </div>
   );
 }

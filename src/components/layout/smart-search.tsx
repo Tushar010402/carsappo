@@ -31,41 +31,37 @@ export function SmartSearch({
   const listId = useId();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<Suggest | null>(null);
+  const [result, setResult] = useState<{ term: string; data: Suggest } | null>(null);
   const [active, setActive] = useState(-1);
   const wrapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const term = q.trim();
+  const searching = term.length >= 2;
+  const loading = searching && result?.term !== term;
+  // Keep the previous suggestions visible while the next request is in flight.
+  const data = searching ? (result?.data ?? null) : null;
 
   useEffect(() => {
     if (autoFocus) inputRef.current?.focus();
   }, [autoFocus]);
 
   useEffect(() => {
-    const term = q.trim();
-    if (term.length < 2) {
-      setData(null);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
+    if (!searching) return;
     const ctrl = new AbortController();
     const t = setTimeout(async () => {
       try {
         const res = await fetch(`/api/search/suggest?q=${encodeURIComponent(term)}`, { signal: ctrl.signal });
-        setData(await res.json());
+        setResult({ term, data: await res.json() });
         setActive(-1);
       } catch {
         /* aborted */
-      } finally {
-        setLoading(false);
       }
     }, 180);
     return () => {
       clearTimeout(t);
       ctrl.abort();
     };
-  }, [q]);
+  }, [term, searching]);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {

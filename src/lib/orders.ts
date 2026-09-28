@@ -186,3 +186,8 @@ export const orderWithDetails = {
   events: { orderBy: { createdAt: "asc" } },
   returnRequests: { orderBy: { createdAt: "desc" } },
 } satisfies Prisma.OrderInclude;
+
+/** Whether a delivered order is still inside the return window. */
+export function isWithinReturnWindow(deliveredAt: Date | undefined, windowDays: number) {
+  return !!deliveredAt && Date.now() - deliveredAt.getTime() < windowDays * 864e5;
+}

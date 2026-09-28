@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, CarFront, RotateCcw } from "lucide-react";
 import { Select } from "@/components/ui/field";
@@ -23,29 +23,21 @@ export function VehicleSelector({
   const router = useRouter();
   const saved = useGarage((s) => s.vehicle);
   const setVehicle = useGarage((s) => s.setVehicle);
-  const [make, setMake] = useState("");
-  const [model, setModel] = useState("");
-  const [year, setYear] = useState("");
-  const [fuel, setFuel] = useState("");
-
-  useEffect(() => {
-    if (saved && !make) {
-      setMake(saved.make);
-      setModel(saved.model);
-      setYear(saved.year ? String(saved.year) : "");
-      setFuel(saved.fuel ?? "");
-    }
-    // Only prefill once from the saved garage vehicle.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [saved]);
+  // null = untouched, in which case the vehicle saved in "My Garage" pre-fills the selector.
+  const [makeInput, setMake] = useState<string | null>(null);
+  const [modelInput, setModel] = useState<string | null>(null);
+  const [yearInput, setYear] = useState<string | null>(null);
+  const [fuelInput, setFuel] = useState<string | null>(null);
+  const untouched = makeInput === null;
+  const make = makeInput ?? saved?.make ?? "";
+  const model = modelInput ?? (untouched ? (saved?.model ?? "") : "");
+  const year = yearInput ?? (untouched && saved?.year ? String(saved.year) : "");
+  const fuel = fuelInput ?? (untouched ? (saved?.fuel ?? "") : "");
 
   const makeObj = makes.find((m) => m.slug === make);
   const modelObj = makeObj?.models.find((m) => m.slug === model);
-  const years = useMemo(() => {
-    if (!modelObj) return [];
-    const end = modelObj.yearTo ?? new Date().getFullYear() + 1;
-    return Array.from({ length: end - modelObj.yearFrom + 1 }, (_, i) => end - i);
-  }, [modelObj]);
+  const endYear = modelObj ? (modelObj.yearTo ?? new Date().getFullYear() + 1) : 0;
+  const years = modelObj ? Array.from({ length: endYear - modelObj.yearFrom + 1 }, (_, i) => endYear - i) : [];
   const fuels = modelObj?.fuelTypes.length ? modelObj.fuelTypes : FUEL_TYPES.map((f) => f.value);
 
   const submit = () => {
@@ -108,6 +100,7 @@ export function VehicleSelector({
           value={model}
           disabled={!makeObj}
           onChange={(e) => {
+            setMake(make);
             setModel(e.target.value);
             setYear("");
             setFuel("");
@@ -121,7 +114,18 @@ export function VehicleSelector({
             </option>
           ))}
         </Select>
-        <Select aria-label="Year" value={year} disabled={!modelObj} onChange={(e) => setYear(e.target.value)} className="h-12">
+        <Select
+          aria-label="Year"
+          value={year}
+          disabled={!modelObj}
+          onChange={(e) => {
+            setMake(make);
+            setModel(model);
+            setYear(e.target.value);
+            setFuel(fuel);
+          }}
+          className="h-12"
+        >
           <option value="">Year (optional)</option>
           {years.map((y) => (
             <option key={y} value={y}>
@@ -129,7 +133,18 @@ export function VehicleSelector({
             </option>
           ))}
         </Select>
-        <Select aria-label="Fuel type" value={fuel} disabled={!modelObj} onChange={(e) => setFuel(e.target.value)} className="h-12">
+        <Select
+          aria-label="Fuel type"
+          value={fuel}
+          disabled={!modelObj}
+          onChange={(e) => {
+            setMake(make);
+            setModel(model);
+            setYear(year);
+            setFuel(e.target.value);
+          }}
+          className="h-12"
+        >
           <option value="">Fuel (optional)</option>
           {fuels.map((f) => (
             <option key={f} value={f}>

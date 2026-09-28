@@ -51,3 +51,13 @@ export function youtubeId(url: string | null | undefined) {
   const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
   return match ? match[1] : null;
 }
+
+/** True if a product was added within the last `days` days (used for the "New" badge). */
+export function isRecent(date: Date | string, days = 21) {
+  return Date.now() - new Date(date).getTime() < days * 24 * 60 * 60 * 1000;
+}
+
+/** Today's date in India as YYYY-MM-DD (for date inputs). */
+export function todayInIndia() {
+  return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}

@@ -14,7 +14,8 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
-    "placeholders": "tsx scripts/generate-placeholders.ts"
+    "placeholders": "tsx scripts/generate-placeholders.ts",
+    "test": "tsx --test tests/*.test.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

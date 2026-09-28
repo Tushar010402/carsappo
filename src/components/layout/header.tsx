@@ -70,12 +70,14 @@ export function Header({
   }, []);
 
   // Close menus on navigation.
-  useEffect(() => {
+  const [lastPath, setLastPath] = useState(pathname);
+  if (lastPath !== pathname) {
+    setLastPath(pathname);
     setMobileOpen(false);
     setSearchOpen(false);
     setMegaOpen(false);
     setAccountOpen(false);
-  }, [pathname]);
+  }
 
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
