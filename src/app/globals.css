@@ -1,0 +1,162 @@
+@import "tailwindcss";
+
+/* Carsappo brand tokens — Black · White · Carsappo Yellow; Poppins (display) + Inter (text). */
+@theme {
+  --color-ink: #0a0a0a;
+  --color-ink-soft: #1c1c1e;
+  --color-paper: #ffffff;
+  --color-mist: #f5f5f7;
+  --color-line: #e7e7ea;
+  --color-muted: #6b6b73;
+
+  --color-brand: #ffc800;
+  --color-brand-dark: #e6b400;
+  --color-brand-soft: #fff7d6;
+
+  --color-success: #0f9d58;
+  --color-danger: #dc2626;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-poppins), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: 1.25rem;
+
+  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px -12px rgb(0 0 0 / 0.12);
+  --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.04), 0 18px 40px -16px rgb(0 0 0 / 0.22);
+
+  --animate-fade-up: fade-up 0.5s ease-out both;
+  --animate-marquee: marquee 40s linear infinite;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-paper text-ink font-sans antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display tracking-tight;
+  }
+  ::selection {
+    @apply bg-brand text-ink;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-dark;
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+}
+
+@layer components {
+  .container-x {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+  .eyebrow {
+    @apply font-display text-xs font-semibold tracking-[0.2em] text-muted uppercase;
+  }
+  .card {
+    @apply rounded-[var(--radius-card)] border border-line bg-paper;
+  }
+  .field {
+    @apply block w-full rounded-xl border border-line bg-paper px-3.5 py-2.5 text-sm text-ink placeholder:text-zinc-400 transition outline-none focus:border-ink focus:ring-2 focus:ring-brand/40 disabled:bg-mist disabled:text-muted;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-ink;
+  }
+  .dot-grid {
+    background-image: radial-gradient(rgb(255 255 255 / 0.12) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  .dot-grid-dark {
+    background-image: radial-gradient(rgb(0 0 0 / 0.07) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .prose-cs {
+    @apply text-[15px] leading-7 text-zinc-700;
+  }
+  .prose-cs h2 {
+    @apply mt-10 mb-3 text-2xl font-semibold text-ink;
+  }
+  .prose-cs h3 {
+    @apply mt-8 mb-2 text-lg font-semibold text-ink;
+  }
+  .prose-cs p {
+    @apply my-4;
+  }
+  .prose-cs ul {
+    @apply my-4 list-disc space-y-1.5 pl-5;
+  }
+  .prose-cs ol {
+    @apply my-4 list-decimal space-y-1.5 pl-5;
+  }
+  .prose-cs a {
+    @apply font-medium text-ink underline decoration-brand decoration-2 underline-offset-4;
+  }
+  .prose-cs strong {
+    @apply font-semibold text-ink;
+  }
+  .prose-cs blockquote {
+    @apply my-6 border-l-4 border-brand bg-brand-soft/60 px-5 py-3 text-ink;
+  }
+  .prose-cs table {
+    @apply my-6 w-full border-collapse text-sm;
+  }
+  .prose-cs th {
+    @apply border-b border-line bg-mist px-3 py-2 text-left font-semibold text-ink;
+  }
+  .prose-cs td {
+    @apply border-b border-line px-3 py-2;
+  }
+  .prose-cs img {
+    @apply my-6 rounded-2xl;
+  }
+  .prose-cs code {
+    @apply rounded bg-mist px-1.5 py-0.5 text-[13px];
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+}
