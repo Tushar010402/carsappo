@@ -47,7 +47,12 @@ export async function ShopView({
   basePath: string;
   category?: { name: string; slug: string; description: string | null };
 }) {
-  const [result, facets, makes] = await Promise.all([listProducts(filters), getShopFacets(), getVehicleMakes()]);
+  const [result, facets, makes, promo] = await Promise.all([
+    listProducts(filters),
+    getShopFacets(),
+    getVehicleMakes(),
+    prisma.banner.findFirst({ where: { isActive: true, placement: "SHOP_TOP" }, orderBy: { sortOrder: "asc" } }),
+  ]);
 
   const vehicle =
     filters.make && filters.model
@@ -111,6 +116,21 @@ export async function ShopView({
         <h1 className="text-3xl font-semibold sm:text-4xl">{title}</h1>
         {category?.description && !filters.q && <p className="mt-2 max-w-2xl text-muted">{category.description}</p>}
       </div>
+
+      {promo && !filters.q && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-brand px-5 py-4">
+          <p className="text-sm">
+            {promo.eyebrow && <span className="mr-2 font-display font-semibold">{promo.eyebrow}</span>}
+            <span className="font-medium">{promo.title}</span>
+            {promo.subtitle && <span className="text-ink/70"> — {promo.subtitle}</span>}
+          </p>
+          {promo.ctaHref && (
+            <Link href={promo.ctaHref} className="text-sm font-semibold underline">
+              {promo.ctaLabel || "Shop now"}
+            </Link>
+          )}
+        </div>
+      )}
 
       {vehicleText && (
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-ink px-5 py-4 text-white">

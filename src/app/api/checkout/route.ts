@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
@@ -46,6 +47,8 @@ export async function POST(req: NextRequest) {
     return tx.order.create({
       data: {
         orderNumber,
+        // Unguessable secret for guest order/invoice links (192 bits).
+        accessToken: crypto.randomBytes(24).toString("base64url"),
         userId: user?.id,
         email: input.email,
         phone: input.phone,

@@ -344,7 +344,7 @@ enum PaymentMethod {
 model Order {
   id                String        @id @default(cuid())
   orderNumber       String        @unique
-  // Unguessable token that lets guests view their order / invoice.
+  // Unguessable token that lets guests view their order / invoice (set to 32 random base64url chars at checkout).
   accessToken       String        @unique @default(cuid())
   userId            String?
   user              User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
