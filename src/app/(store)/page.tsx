@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
@@ -15,6 +16,9 @@ import { PromoBanner } from "@/components/home/promo-banner";
 import { ProductCard, ProductGrid } from "@/components/product/product-card";
 import { Rail } from "@/components/product/product-rail";
 import { SectionHeader } from "@/components/ui/container";
+
+// Title and description come from Admin → SEO (root layout); the canonical keeps ?utm_… variants from being indexed separately.
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function HomePage() {
   const [settings, categories, makes, bestSellers, latest, premium, trending, banners, testimonials, cheapestPlan, instagram, google, modelCount] =
@@ -77,7 +81,7 @@ export default async function HomePage() {
         <section className="bg-ink text-white">
           <div className="container-x py-20 sm:py-24">
             <SectionHeader dark eyebrow="Best Sellers" title="Most loved by Carsappo customers." href="/shop?collection=best-sellers" />
-            <Rail dark itemClassName="sm:!w-[40%] lg:!w-[31.5%]">
+            <Rail dark label="Best sellers" itemClassName="sm:!w-[40%] lg:!w-[31.5%]">
               {bestSellers.map((p, i) => (
                 <div key={p.id} className="rounded-[28px] bg-white p-3 text-ink sm:p-4">
                   <ProductCard product={p} priority={i < 3} />

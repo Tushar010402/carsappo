@@ -38,6 +38,11 @@ test("utils", () => {
   assert.equal(safeRedirectPath("//evil.com"), "/");
   assert.equal(safeRedirectPath("https://evil.com"), "/");
   assert.equal(safeRedirectPath("/checkout"), "/checkout");
+  assert.equal(safeRedirectPath("/\\evil.com"), "/");
+  assert.equal(safeRedirectPath("/\t/evil.com"), "/");
+  assert.equal(safeRedirectPath("/\n/evil.com"), "/");
+  assert.equal(safeRedirectPath("javascript:alert(1)"), "/");
+  assert.equal(safeRedirectPath("/account/orders?tab=open#x"), "/account/orders?tab=open#x");
   assert.equal(whatsappLink("98765 43210", "hi"), "https://wa.me/919876543210?text=hi");
   assert.equal(youtubeId("https://youtu.be/dQw4w9WgXcQ"), "dQw4w9WgXcQ");
   assert.equal(youtubeId("https://www.youtube.com/shorts/dQw4w9WgXcQ"), "dQw4w9WgXcQ");

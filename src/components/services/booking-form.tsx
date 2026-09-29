@@ -54,7 +54,7 @@ export function BookingForm({
               href={whatsappLink(whatsapp, `Hi Carsappo! I just booked a service. Booking number: ${state.bookingNumber}`)}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-11 items-center gap-2 rounded-full bg-[#25D366] px-5 text-sm font-semibold text-white"
+              className="inline-flex h-11 items-center gap-2 rounded-full bg-[#25D366] px-5 text-sm font-semibold text-ink"
             >
               <WhatsappIcon className="size-4" /> Chat on WhatsApp
             </a>
@@ -68,6 +68,8 @@ export function BookingForm({
   }
 
   const e = state.errors ?? {};
+  // The server's pincode error only applies to the pincode that was submitted; once edited, the live check takes over.
+  const pinError = e.pincode && pin === state.values?.pincode ? e.pincode : undefined;
   return (
     <form action={action} className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
@@ -81,7 +83,7 @@ export function BookingForm({
           </Select>
         </Field>
         <Field label="Plan" htmlFor="b-plan">
-          <Select id="b-plan" name="planId" defaultValue={state.values?.planId ?? (defaultPlan && typePlans.some((p) => p.id === defaultPlan) ? defaultPlan : (typePlans[0]?.id ?? ""))} key={type}>
+          <Select id="b-plan" name="planId" defaultValue={state.values?.planId ?? (defaultPlan && typePlans.some((p) => p.id === defaultPlan) ? defaultPlan : (typePlans[0]?.id ?? ""))} key={`${type}:${state.values?.planId}`}>
             {typePlans.length === 0 && <option value="">Custom — we&apos;ll share a quote</option>}
             {typePlans.map((p) => (
               <option key={p.id} value={p.id}>
@@ -105,11 +107,11 @@ export function BookingForm({
         </Field>
         <Field
           label="Pincode"
-          error={e.pincode}
+          error={pinError}
           hint={pinChecked ? (pinOk ? "✓ We serve your area" : "Sorry, this pincode is outside our Greater Noida service area") : "Greater Noida only"}
           htmlFor="b-pin"
         >
-          <Input id="b-pin" name="pincode" inputMode="numeric" maxLength={6} required value={pin} onChange={(ev) => setPin(ev.target.value.replace(/\D/g, ""))} invalid={!!e.pincode || (pinChecked && !pinOk)} />
+          <Input id="b-pin" name="pincode" inputMode="numeric" maxLength={6} required value={pin} onChange={(ev) => setPin(ev.target.value.replace(/\D/g, ""))} invalid={!!pinError || (pinChecked && !pinOk)} />
         </Field>
         <Field label="Full address" error={e.address} className="sm:col-span-2" htmlFor="b-address">
           <Input id="b-address" name="address" autoComplete="street-address" defaultValue={state.values?.address} required placeholder="Flat / tower, sector" invalid={!!e.address} />
@@ -127,7 +129,7 @@ export function BookingForm({
           <Input id="b-date" name="preferredDate" type="date" min={today} defaultValue={state.values?.preferredDate ?? today} required invalid={!!e.preferredDate} />
         </Field>
         <Field label="Preferred time slot" error={e.preferredSlot} htmlFor="b-slot">
-          <Select id="b-slot" name="preferredSlot" defaultValue={state.values?.preferredSlot ?? SERVICE_SLOTS[0]}>
+          <Select id="b-slot" name="preferredSlot" defaultValue={state.values?.preferredSlot ?? SERVICE_SLOTS[0]} key={state.values?.preferredSlot}>
             {SERVICE_SLOTS.map((s) => (
               <option key={s}>{s}</option>
             ))}

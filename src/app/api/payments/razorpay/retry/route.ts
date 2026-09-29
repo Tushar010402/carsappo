@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { createRazorpayOrder, fetchRazorpayOrder, razorpayEnabled, razorpayKeyId } from "@/lib/razorpay";
 import { confirmOrder } from "@/lib/orders";
+import { rememberOrderAccess } from "@/lib/order-access";
 import { getSettings } from "@/lib/settings";
 
 const schema = z.object({ orderNumber: z.string().max(20), token: z.string().max(40) });
@@ -19,7 +20,8 @@ export async function POST(req: NextRequest) {
   let rzp = order.razorpayOrderId ? await fetchRazorpayOrder(order.razorpayOrderId).catch(() => null) : null;
   if (rzp?.status === "paid") {
     await confirmOrder(order.id, { paid: true });
-    return NextResponse.json({ redirect: `/order/${order.orderNumber}?t=${order.accessToken}&placed=1` });
+    await rememberOrderAccess(order);
+    return NextResponse.json({ redirect: `/order/${order.orderNumber}?placed=1` });
   }
   if (!rzp || rzp.amount !== order.total) {
     rzp = { ...(await createRazorpayOrder({ amount: order.total, receipt: order.orderNumber, notes: { orderId: order.id } })), amount_paid: 0 };

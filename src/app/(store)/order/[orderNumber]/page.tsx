@@ -28,7 +28,7 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/or
   const placed = firstParam(sp.placed) === "1";
   const confirmed = order.status !== "PENDING" && order.status !== "CANCELLED";
   const awaitingPayment = order.status === "PENDING" && order.paymentMethod === "RAZORPAY";
-  const invoiceHref = `/invoice/${order.orderNumber}?t=${order.accessToken}`;
+  const invoiceHref = `/invoice/${order.orderNumber}`;
 
   return (
     <div className="container-x max-w-5xl py-10 sm:py-14">

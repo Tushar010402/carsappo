@@ -51,7 +51,7 @@ export default async function AccountOrderPage({ params }: PageProps<"/account/o
         </div>
         <div className="flex flex-wrap gap-2">
           {order.invoiceNumber && (
-            <ButtonLink href={`/invoice/${order.orderNumber}?t=${order.accessToken}`} target="_blank" variant="outline" size="sm">
+            <ButtonLink href={`/invoice/${order.orderNumber}`} target="_blank" variant="outline" size="sm">
               <FileText className="size-4" /> Invoice
             </ButtonLink>
           )}

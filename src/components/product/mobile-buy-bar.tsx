@@ -13,15 +13,40 @@ export function MobileBuyBar({ product, anchorId }: { product: CartProduct; anch
   const add = useCart((s) => s.add);
   const openDrawer = useCart((s) => s.openDrawer);
 
+  // Shown once the main buy box is fully above the viewport. A scroll check (not an IntersectionObserver)
+  // also catches fast flings and in-page jumps that skip straight past the box.
   useEffect(() => {
     const el = document.getElementById(anchorId);
     if (!el) return;
-    const io = new IntersectionObserver(([entry]) => setVisible(!entry.isIntersecting && entry.boundingClientRect.top < 0));
-    io.observe(el);
-    return () => io.disconnect();
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      setVisible(el.getBoundingClientRect().bottom < 0);
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    schedule();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
   }, [anchorId]);
 
-  if (!visible || product.stock <= 0) return null;
+  const shown = visible && product.stock > 0;
+  // Lets the floating WhatsApp button move up so it never covers "Add to cart" (see globals.css).
+  useEffect(() => {
+    if (!shown) return;
+    document.body.dataset.buyBar = "";
+    return () => {
+      delete document.body.dataset.buyBar;
+    };
+  }, [shown]);
+
+  if (!shown) return null;
   return (
     <div className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-3 border-t border-line bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
       <div className="min-w-0 flex-1">

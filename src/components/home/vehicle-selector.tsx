@@ -66,12 +66,12 @@ export function VehicleSelector({
   return (
     <div className={cn(!compact && "rounded-[28px] bg-white p-5 shadow-lift sm:p-7")}>
       {!compact && (
-        <ol className="mb-5 flex items-center gap-2 text-xs font-medium text-muted" aria-hidden>
+        <ol className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs font-medium text-muted sm:gap-2" aria-hidden>
           {steps.map((s, i) => (
-            <li key={s.label} className="flex items-center gap-2">
+            <li key={s.label} className="flex items-center gap-1.5 sm:gap-2">
               <span className={cn("grid size-6 place-items-center rounded-full text-[11px] font-bold", s.done ? "bg-brand text-ink" : "bg-mist")}>{i + 1}</span>
               <span className={cn(s.done && "text-ink")}>{s.label}</span>
-              {i < steps.length - 1 && <span className="mx-1 h-px w-4 bg-line sm:w-8" />}
+              {i < steps.length - 1 && <span className="mx-1 hidden h-px w-8 bg-line sm:block" />}
             </li>
           ))}
         </ol>

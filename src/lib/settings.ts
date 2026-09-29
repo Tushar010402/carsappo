@@ -67,16 +67,12 @@ type Widen<T> = T extends string ? string : T extends number ? number : T extend
 export type Settings = Widen<typeof SETTINGS_DEFAULTS>;
 export type SettingsGroup = keyof Settings;
 
+const defaults = () => structuredClone(SETTINGS_DEFAULTS) as unknown as Settings;
+
+/** Defaults overlaid with the saved rows. Throws if the database is unreachable. */
 async function loadSettings(): Promise<Settings> {
-  const result = structuredClone(SETTINGS_DEFAULTS) as unknown as Settings;
-  let rows: { key: string; value: string }[] = [];
-  try {
-    rows = await prisma.setting.findMany();
-  } catch (err) {
-    // Keep the storefront rendering (e.g. during a build without DB access) with defaults.
-    console.warn("[settings] could not load settings, using defaults:", (err as Error).message);
-    return result;
-  }
+  const result = defaults();
+  const rows = await prisma.setting.findMany();
   for (const row of rows) {
     if (!(row.key in result)) continue;
     try {
@@ -90,7 +86,18 @@ async function loadSettings(): Promise<Settings> {
   return result;
 }
 
-export const getSettings = unstable_cache(loadSettings, ["settings-v1"], { tags: ["settings"], revalidate: 300 });
+const cachedSettings = unstable_cache(loadSettings, ["settings-v1"], { tags: ["settings"], revalidate: 300 });
+
+export async function getSettings(): Promise<Settings> {
+  try {
+    return await cachedSettings();
+  } catch (err) {
+    // Keep pages rendering (e.g. a build without DB access) with defaults — without caching them,
+    // so the real settings appear as soon as the database is reachable.
+    console.warn("[settings] could not load settings, using defaults:", (err as Error).message);
+    return defaults();
+  }
+}
 
 export async function saveSettingsGroup<G extends SettingsGroup>(group: G, value: Partial<Settings[G]>) {
   const current = (await loadSettings())[group];

@@ -3,6 +3,8 @@ import { absoluteUrl } from "@/lib/utils";
 
 type Crumb = { name: string; path: string };
 
+const DEFAULT_OG_IMAGE = "/images/og-default.png";
+
 export function pageMetadata(args: {
   title: string;
   description?: string | null;
@@ -12,7 +14,10 @@ export function pageMetadata(args: {
   noIndex?: boolean;
 }): Metadata {
   const url = absoluteUrl(args.path);
-  const images = args.image ? [{ url: args.image.startsWith("http") ? args.image : absoluteUrl(args.image) }] : undefined;
+  // A page's openGraph replaces the site-wide one entirely, so fall back to the default share image.
+  const images = args.image
+    ? [{ url: args.image.startsWith("http") ? args.image : absoluteUrl(args.image) }]
+    : [{ url: absoluteUrl(DEFAULT_OG_IMAGE), width: 1200, height: 630 }];
   return {
     title: args.title,
     description: args.description ?? undefined,
@@ -26,7 +31,7 @@ export function pageMetadata(args: {
       siteName: "Carsappo",
       locale: "en_IN",
     },
-    twitter: { card: images ? "summary_large_image" : "summary", title: args.title, description: args.description ?? undefined },
+    twitter: { card: "summary_large_image", title: args.title, description: args.description ?? undefined },
     robots: args.noIndex ? { index: false, follow: false } : undefined,
   };
 }

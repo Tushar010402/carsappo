@@ -67,7 +67,7 @@ test.describe("Checkout", () => {
     await expect(page.getByText("Select a state")).toBeVisible();
   });
 
-  test("guest COD order: confirmation, stock, GST invoice (CGST+SGST) and emails @mobile", async ({ page }, testInfo) => {
+  test("guest COD order: confirmation, stock, GST invoice (CGST+SGST) and emails @mobile", async ({ page, browser }, testInfo) => {
     const email = `${unique("guest")}@example.com`;
     // Each project buys a different product so parallel runs don't race on stock.
     const slug = testInfo.project.name === "mobile" ? "ph-neutral-car-shampoo-1l" : "dashboard-polish-matte-300ml";
@@ -79,7 +79,8 @@ test.describe("Checkout", () => {
     await expect(page.getByText("COD charges")).toBeVisible();
     await page.getByRole("button", { name: /Place order/ }).click();
 
-    await page.waitForURL(/\/order\/CS\d+\?t=.+&placed=1/);
+    // The secret access token is swapped for a cookie, so it never shows in the URL (or analytics page views).
+    await page.waitForURL(/\/order\/CS\d+\?placed=1$/);
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Thank you, Guest! Your order is confirmed.");
     const orderNumber = page.url().match(/order\/(CS\d+)/)![1];
 
@@ -99,6 +100,17 @@ test.describe("Checkout", () => {
 
     const mail = await waitForMail({ to: email, subject: new RegExp(`Order ${orderNumber} confirmed`) });
     expect(mail.html).toContain(orderNumber);
+
+    // Without the token nobody else can see the order; the emailed link opens it on any device.
+    const stranger = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+    const sp = await stranger.newPage();
+    expect((await sp.goto(`/order/${orderNumber}`))?.status()).toBe(404);
+    expect((await sp.goto(`/invoice/${orderNumber}`))?.status()).toBe(404);
+    const emailLink = mail.html.match(/href="([^"]*\/order\/[^"]+\?t=[^"]+)"/)![1].replace(/&amp;/g, "&");
+    await sp.goto(emailLink.replace(/^https?:\/\/[^/]+/, ""));
+    await expect(sp).toHaveURL(new RegExp(`/order/${orderNumber}$`));
+    await expect(sp.getByText(orderNumber).first()).toBeVisible();
+    await stranger.close();
     await waitForMail({ to: "ops@carsappo.test", subject: new RegExp(`New order ${orderNumber}`) });
 
     // GST invoice: Uttar Pradesh buyer from a UP seller → CGST + SGST.

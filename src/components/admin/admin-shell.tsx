@@ -129,7 +129,6 @@ export function AdminShell({
           "fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-ink text-zinc-300 transition-transform duration-200 lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full",
         )}
-        aria-label="Admin navigation"
       >
         <div className="flex h-16 shrink-0 items-center justify-between gap-2 border-b border-white/10 px-5">
           <Link href="/admin" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
@@ -138,7 +137,7 @@ export function AdminShell({
               <span className="block font-display text-[15px] font-bold tracking-[0.08em] text-white">
                 CARS<span className="text-brand">APPO</span>
               </span>
-              <span className="block text-[10px] font-semibold tracking-[0.2em] text-zinc-500 uppercase">Admin</span>
+              <span className="block text-[10px] font-semibold tracking-[0.2em] text-zinc-400 uppercase">Admin</span>
             </span>
           </Link>
           <button type="button" className="grid size-8 place-items-center rounded-lg text-zinc-400 hover:bg-white/10 hover:text-white lg:hidden" onClick={() => setOpen(false)} aria-label="Close menu">
@@ -146,10 +145,10 @@ export function AdminShell({
           </button>
         </div>
 
-        <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4 [scrollbar-width:thin]">
+        <nav aria-label="Admin navigation" className="flex-1 space-y-5 overflow-y-auto px-3 py-4 [scrollbar-width:thin]">
           {NAV.map((group) => (
             <div key={group.heading}>
-              <p className="mb-1.5 px-3 text-[10px] font-semibold tracking-[0.18em] text-zinc-500 uppercase">{group.heading}</p>
+              <p className="mb-1.5 px-3 text-[10px] font-semibold tracking-[0.18em] text-zinc-400 uppercase">{group.heading}</p>
               <ul className="space-y-0.5">
                 {group.items.map((item) => {
                   const active = isActive(pathname, item.href);

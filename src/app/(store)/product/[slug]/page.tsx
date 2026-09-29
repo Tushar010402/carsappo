@@ -160,7 +160,7 @@ export default async function ProductPage({ params }: PageProps<"/product/[slug]
                     href={whatsappLink(store.whatsapp, waText)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex h-13 items-center justify-center gap-2 rounded-full bg-[#25D366] font-display text-sm font-semibold text-white hover:bg-[#1ebe5a]"
+                    className="inline-flex h-13 items-center justify-center gap-2 rounded-full bg-[#25D366] font-display text-sm font-semibold text-ink hover:bg-[#1ebe5a]"
                   >
                     <WhatsappIcon className="size-4" /> WhatsApp Enquiry
                   </a>
@@ -344,7 +344,7 @@ export default async function ProductPage({ params }: PageProps<"/product/[slug]
         {related.length > 0 && (
           <section className="mt-24">
             <SectionHeader eyebrow="You may also like" title="Related products" href={`/category/${product.category.slug}`} />
-            <Rail>
+            <Rail label="Related products">
               {related.map((p) => (
                 <ProductCard key={p.id} product={p} />
               ))}

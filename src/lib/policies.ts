@@ -120,7 +120,7 @@ Grievance officer: ${name}, ${s.store.address}. Email: ${email}.`,
     case "terms-and-conditions":
       return {
         title: "Terms & Conditions",
-        body: `By using carsappo.com you agree to these terms.
+        body: `carsappo.com is operated by ${name}${s.store.address ? `, ${s.store.address}` : ""}${s.store.gstin ? ` (GSTIN ${s.store.gstin})` : ""}. By using the website you agree to these terms.
 
 ## Products & pricing
 - All prices are in Indian Rupees and **inclusive of GST**.
@@ -144,6 +144,9 @@ Our liability for any claim is limited to the value of the product or service pu
 
 ## Governing law
 These terms are governed by the laws of India. Courts at Gautam Buddh Nagar, Uttar Pradesh shall have exclusive jurisdiction.
+
+## Grievance officer
+${name}${s.store.address ? `, ${s.store.address}` : ""}. Email: ${email}. We acknowledge complaints within 48 hours and resolve them within one month.
 
 Contact: ${contactLine}.`,
       };

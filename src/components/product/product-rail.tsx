@@ -5,7 +5,20 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /** Horizontal scroll-snap slider with arrow controls. Children are rendered as slides. */
-export function Rail({ children, className, itemClassName, dark }: { children: React.ReactNode[]; className?: string; itemClassName?: string; dark?: boolean }) {
+export function Rail({
+  children,
+  className,
+  itemClassName,
+  dark,
+  label = "Carousel",
+}: {
+  children: React.ReactNode[];
+  className?: string;
+  itemClassName?: string;
+  dark?: boolean;
+  /** Accessible name of the scroll area (keyboard users focus it and scroll with the arrow keys). */
+  label?: string;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const scroll = (dir: 1 | -1) => {
     const el = ref.current;
@@ -18,7 +31,13 @@ export function Rail({ children, className, itemClassName, dark }: { children: R
   );
   return (
     <div className={cn("relative", className)}>
-      <div ref={ref} className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-4 pb-2 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
+      <div
+        ref={ref}
+        role="region"
+        aria-label={label}
+        tabIndex={0}
+        className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth rounded-2xl px-4 pb-2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0"
+      >
         {children.map((child, i) => (
           <div key={i} className={cn("w-[46%] shrink-0 snap-start sm:w-[31%] lg:w-[23.5%]", itemClassName)}>
             {child}

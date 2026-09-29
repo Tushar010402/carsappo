@@ -25,7 +25,7 @@ export default async function RegisterPage({ searchParams }: PageProps<"/registe
         </>
       }
     >
-      <RegisterForm next={next ? safeRedirectPath(next) : undefined} email={firstParam(sp.email)} />
+      <RegisterForm next={(next && safeRedirectPath(next, "")) || undefined} email={firstParam(sp.email)} />
     </AuthShell>
   );
 }

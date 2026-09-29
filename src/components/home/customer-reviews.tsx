@@ -63,12 +63,12 @@ export function CustomerReviews({
     : testimonials.filter((t) => t.type === "GOOGLE").map((t) => <GoogleCard key={t.id} name={t.name} rating={t.rating} text={t.content} meta={t.location} />);
 
   const tabs = [
-    images.length && { id: "image", label: "Image Reviews", content: <Rail>{images.map((t) => <ImageReview key={t.id} t={t} />)}</Rail> },
+    images.length && { id: "image", label: "Image Reviews", content: <Rail label="Image reviews">{images.map((t) => <ImageReview key={t.id} t={t} />)}</Rail> },
     videos.length && {
       id: "video",
       label: "Video Reviews",
       content: (
-        <Rail itemClassName="!w-[62%] sm:!w-[31%] lg:!w-[23.5%]">
+        <Rail label="Video reviews" itemClassName="!w-[62%] sm:!w-[31%] lg:!w-[23.5%]">
           {videos.map((t) => (
             <figure key={t.id}>
               <VideoCard url={t.mediaUrl!} title={`Review by ${t.name}`} />
@@ -80,7 +80,7 @@ export function CustomerReviews({
         </Rail>
       ),
     },
-    googleCards.length && { id: "google", label: "Google Reviews", content: <Rail>{googleCards}</Rail> },
+    googleCards.length && { id: "google", label: "Google Reviews", content: <Rail label="Google reviews">{googleCards}</Rail> },
   ].filter(Boolean) as { id: string; label: string; content: React.ReactNode }[];
 
   if (!tabs.length) return null;

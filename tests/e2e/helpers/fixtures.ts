@@ -1,18 +1,30 @@
 import crypto from "node:crypto";
 import { readdirSync, readFileSync, existsSync } from "node:fs";
 import path from "node:path";
-import { test as base, expect, type Page } from "@playwright/test";
+import { test as base, expect, type APIRequestContext, type Page } from "@playwright/test";
 import { MOCK_PORT, RAZORPAY_TEST_SECRET } from "../env";
 
 export const ADMIN_STATE = "test-results/.auth/admin.json";
 export const CUSTOMER_STATE = "test-results/.auth/customer.json";
 
+// 1×1 transparent PNG.
+const PIXEL = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=", "base64");
+
 export const test = base.extend<{ consoleErrors: string[] }>({
   // Every test fails if the page logs an uncaught error or a console error.
   consoleErrors: [
     async ({ page }, use) => {
+      // Third-party tags and thumbnails are stubbed so the suite never depends on the internet
+      // (admin tests switch tracking IDs on while other tests browse the store).
+      await page.route(/googletagmanager\.com|google-analytics\.com|connect\.facebook\.net/, (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
+      await page.route(/i\.ytimg\.com/, (r) => r.fulfill({ status: 200, contentType: "image/png", body: PIXEL }));
       const errors: string[] = [];
       page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
+      // Name the URL when a resource fails at the network level (the console message omits it).
+      page.on("requestfailed", (r) => {
+        const reason = r.failure()?.errorText ?? "";
+        if (reason && reason !== "net::ERR_ABORTED") errors.push(`requestfailed: ${r.url()} ${reason}`);
+      });
       page.on("console", (m) => {
         if (m.type() !== "error") return;
         const text = m.text();
@@ -115,4 +127,47 @@ export async function fillCheckoutAddress(
 /** Returns true if the document scrolls horizontally (a responsive-layout bug). */
 export async function hasHorizontalOverflow(page: Page) {
   return page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+}
+
+/**
+ * Places an order straight through the checkout API (as a guest) — fast setup for admin tests.
+ * Online orders are "paid" by signing the Razorpay order like Razorpay does.
+ */
+export async function placeOrderViaApi(
+  request: APIRequestContext,
+  opts: { items: { productId: string; quantity: number }[]; email: string; method: "COD" | "RAZORPAY"; state?: string; pincode?: string; couponCode?: string },
+) {
+  const res = await request.post("/api/checkout", {
+    data: {
+      items: opts.items,
+      email: opts.email,
+      phone: "9811100011",
+      couponCode: opts.couponCode ?? null,
+      address: {
+        name: "Admin Test Buyer",
+        phone: "9811100011",
+        line1: "12, MG Road, Sector 14",
+        city: opts.state === "Karnataka" ? "Bengaluru" : "Greater Noida",
+        state: opts.state ?? "Uttar Pradesh",
+        pincode: opts.pincode ?? (opts.state === "Karnataka" ? "560001" : "201310"),
+      },
+      paymentMethod: opts.method,
+    },
+  });
+  const body = await res.json();
+  expect(res.status(), JSON.stringify(body)).toBe(200);
+  if (opts.method === "RAZORPAY") {
+    const paymentId = `pay_${crypto.randomBytes(7).toString("hex")}`;
+    const signature = crypto.createHmac("sha256", RAZORPAY_TEST_SECRET).update(`${body.razorpay.orderId}|${paymentId}`).digest("hex");
+    const verify = await request.post("/api/payments/razorpay/verify", {
+      data: { razorpay_order_id: body.razorpay.orderId, razorpay_payment_id: paymentId, razorpay_signature: signature },
+    });
+    expect(verify.status()).toBe(200);
+  }
+  return body.orderNumber as string;
+}
+
+/** Accept every window.confirm() the admin UI raises. */
+export function autoConfirm(page: Page) {
+  page.on("dialog", (d) => void d.accept());
 }

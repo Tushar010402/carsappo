@@ -94,7 +94,7 @@ export function ReturnRequestForm({ orderNumber }: { orderNumber: string }) {
     <form action={action} className="space-y-4">
       <input type="hidden" name="orderNumber" value={orderNumber} />
       <Field label="Reason" error={state.errors?.reason} htmlFor="ret-reason">
-        <Select id="ret-reason" name="reason" required defaultValue={state.values?.reason ?? ""}>
+        <Select id="ret-reason" name="reason" required defaultValue={state.values?.reason ?? ""} key={state.values?.reason}>
           <option value="" disabled>
             Select a reason
           </option>

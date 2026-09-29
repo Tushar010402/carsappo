@@ -250,7 +250,7 @@ test.describe("Accounts & authentication", () => {
     await expect(page.getByText("We couldn't find an order with those details.")).toBeVisible();
     await page.fill("#t-contact", order.email);
     await page.getByRole("button", { name: "Track order" }).click();
-    await page.waitForURL(new RegExp(`/order/${order.orderNumber}\\?t=`));
+    await page.waitForURL(new RegExp(`/order/${order.orderNumber}$`));
     await expect(page.getByRole("heading", { name: "Order status" })).toBeVisible();
   });
 });

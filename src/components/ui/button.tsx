@@ -9,7 +9,8 @@ const variants = {
   "outline-light": "border border-white/25 text-white hover:border-white hover:bg-white/5",
   ghost: "text-ink hover:bg-mist",
   danger: "bg-danger text-white hover:bg-red-700",
-  whatsapp: "bg-[#25D366] text-white hover:bg-[#1ebe5a]",
+  // Dark text: white on WhatsApp green is only ~2:1 contrast (WCAG AA needs 4.5:1).
+  whatsapp: "bg-[#25D366] text-ink hover:bg-[#1ebe5a]",
 } as const;
 
 const sizes = {

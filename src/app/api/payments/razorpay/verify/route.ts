@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { verifyPaymentSignature } from "@/lib/razorpay";
 import { confirmOrder } from "@/lib/orders";
+import { rememberOrderAccess } from "@/lib/order-access";
 
 const schema = z.object({
   razorpay_order_id: z.string().min(1).max(64),
@@ -22,5 +23,6 @@ export async function POST(req: NextRequest) {
   if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
 
   await confirmOrder(order.id, { paid: true, razorpayPaymentId: razorpay_payment_id });
-  return NextResponse.json({ redirect: `/order/${order.orderNumber}?t=${order.accessToken}&placed=1` });
+  await rememberOrderAccess(order);
+  return NextResponse.json({ redirect: `/order/${order.orderNumber}?placed=1` });
 }

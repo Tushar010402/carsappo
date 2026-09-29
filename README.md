@@ -79,6 +79,30 @@ Without Razorpay keys, checkout offers Cash on Delivery only. Without SMTP, emai
 | `npm run db:deploy` | Apply migrations (production) |
 | `npm run db:seed` | Seed / refresh starter data (idempotent) |
 | `npm run placeholders` | Regenerate the branded placeholder images |
+| `npm run test:e2e` | Full end-to-end suite (see *Testing*) |
+
+## Testing
+
+`npm test` runs the unit tests (GST split, pricing, validators, redirects). `npm run test:e2e` runs
+**~120 Playwright tests** against a production build, on desktop (1440px) and a phone (Pixel 7):
+
+- **Storefront** — every homepage section, smart search, shop-by-vehicle, all shop filters/sorts, product
+  page (gallery, zoom, video, specs, compatibility, FAQs, FBT, pincode check, fit check, reviews, WhatsApp),
+  cart maths (GST, shipping threshold, coupons, COD fee), guest + signed-in checkout, Razorpay payment /
+  retry / webhook, COD, GST invoices, emails, customer dashboard, returns, password reset, order tracking.
+- **Services & content** — booking (pincode-gated to Greater Noida), plans, FAQs, contact, blog, policies, 404s.
+- **Admin** — products (with image upload), inventory + CSV, orders → Shiprocket shipment / AWB / pickup /
+  label / tracking, status emails, COD collection, partial + full Razorpay refunds, returns + restock,
+  coupons, reviews, banners, testimonials, blog, settings, SEO & tracking tags, access control.
+- **Quality gates** — no horizontal scrolling at 360 / 390 / 768 / 1024 / 1280 / 1920px, axe WCAG 2.1 AA
+  (no serious/critical issues), unique titles/descriptions/canonicals, JSON-LD, sitemap/robots, security
+  headers, open-redirect and XSS checks, server-side price integrity, webhook signatures.
+
+Razorpay and Shiprocket are replaced by a local mock server and emails are written to
+`test-results/outbox`, so the suite needs no real keys or internet. Each run creates a fresh database
+`carsappo_e2e_<timestamp>` on the local Postgres (override with `E2E_POSTGRES_URL`, or set
+`E2E_DATABASE_URL` to use an existing empty database as CI does). The HTML report is in `playwright-report/`.
+CI (`.github/workflows/ci.yml`) runs lint, typecheck, unit tests, build and the full e2e suite on every push.
 
 ## Deployment
 
@@ -89,6 +113,31 @@ Without Razorpay keys, checkout offers Cash on Delivery only. Without SMTP, emai
 3. `npm ci && npx prisma migrate deploy && npm run db:seed && npm run build`
 4. `pm2 start npm --name carsappo -- start` and proxy Nginx → `localhost:3000`; add HTTPS with `certbot --nginx -d carsappo.com -d www.carsappo.com`.
 5. Point the domain's DNS `A` records (`@` and `www`) to the server IP.
+
+### Option A2 — VPS with Docker
+
+```bash
+cp .env.example .env        # fill in real values and add POSTGRES_PASSWORD=<strong password>
+docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml exec app npm run db:seed    # first deploy only
+```
+
+The app listens on `127.0.0.1:3000`; migrations run automatically on start and uploads live in a volume.
+
+**Reverse proxy (either option):** Nginx must pass the client IP, which rate limiting relies on:
+
+```nginx
+location / {
+  proxy_pass http://127.0.0.1:3000;
+  proxy_set_header Host $host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  client_max_body_size 50m;   # admin video uploads
+}
+```
+
+Never set `RATE_LIMIT_DISABLED` in production — it exists only for the test suite.
 
 ### Option B — Vercel + managed Postgres
 
@@ -126,5 +175,5 @@ src/app/invoice/      printable GST invoice
 src/components/       UI kit, layout, home, product, shop, checkout, account, order, admin
 src/lib/              data access, auth, pricing/GST, orders, Razorpay, Shiprocket, SEO, settings
 src/store/            client stores (cart, wishlist, garage)
-tests/                unit tests
+tests/                unit tests; tests/e2e/ Playwright suite, mocks and helpers
 ```

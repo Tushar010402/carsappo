@@ -14,7 +14,7 @@ import { ContactForm } from "@/components/services/contact-form";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Daily Car Cleaning in Greater Noida — Doorstep Car Wash Plans",
+  title: "Daily Car Cleaning in Greater Noida — Doorstep Plans",
   description:
     "Daily doorstep car cleaning in Greater Noida from ₹699/month. Waterless exterior cleaning, interior cleaning, tyre polish and dashboard polish by trained Carsappo cleaners.",
   path: "/services",

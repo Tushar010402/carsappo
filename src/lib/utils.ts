@@ -20,11 +20,19 @@ export function absoluteUrl(path = "/") {
   return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
-/** Only allow same-site relative redirects (prevents open redirects via ?next=). */
+/** Same-site path to send the user to after login, or `fallback` for anything that could leave the site. */
 export function safeRedirectPath(input: unknown, fallback = "/") {
-  if (typeof input !== "string") return fallback;
-  if (!input.startsWith("/") || input.startsWith("//") || input.startsWith("/\\")) return fallback;
-  return input;
+  if (typeof input !== "string" || !input.startsWith("/")) return fallback;
+  // Browsers drop tabs/newlines and read "\" as "/", so "/\t/evil.com" or "/\\evil.com" would be off-site.
+  const cleaned = input.replace(/[\u0000-\u001F\u007F]/g, "");
+  if (cleaned.startsWith("//") || cleaned.startsWith("/\\")) return fallback;
+  try {
+    const url = new URL(cleaned, "http://same-site.invalid");
+    if (url.origin !== "http://same-site.invalid") return fallback;
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return fallback;
+  }
 }
 
 export function toArray<T>(value: T | T[] | undefined | null): T[] {

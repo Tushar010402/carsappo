@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { getAccessibleOrder } from "@/lib/order-access";
+import { getAccessibleOrder, rememberOrderAccess } from "@/lib/order-access";
 import { setOrderStatus } from "@/lib/orders";
 import { refundRazorpayPayment, razorpayEnabled } from "@/lib/razorpay";
 import { cancelShiprocketOrder, shiprocketEnabled } from "@/lib/shiprocket";
@@ -105,5 +105,6 @@ export async function lookupOrder(_: FormState, formData: FormData): Promise<For
   const matches =
     order && (order.email.toLowerCase() === contact || (phoneDigits.length === 10 && (order.phone.endsWith(phoneDigits) || order.shipPhone.endsWith(phoneDigits))));
   if (!order || !matches) return failure(formData, { message: "We couldn't find an order with those details." });
-  redirect(`/order/${order.orderNumber}?t=${order.accessToken}`);
+  await rememberOrderAccess(order);
+  redirect(`/order/${order.orderNumber}`);
 }

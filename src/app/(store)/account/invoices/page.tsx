@@ -39,7 +39,7 @@ export default async function InvoicesPage() {
                   <td className="px-4 py-3">{o.orderNumber}</td>
                   <td className="px-4 py-3 text-right">{formatINR(o.total)}</td>
                   <td className="px-4 py-3 text-right">
-                    <a href={`/invoice/${o.orderNumber}?t=${o.accessToken}`} target="_blank" className="font-semibold underline">
+                    <a href={`/invoice/${o.orderNumber}`} target="_blank" className="font-semibold underline">
                       Download
                     </a>
                   </td>

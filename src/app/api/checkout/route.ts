@@ -8,6 +8,7 @@ import { confirmOrder, generateOrderNumber } from "@/lib/orders";
 import { createRazorpayOrder, razorpayEnabled, razorpayKeyId } from "@/lib/razorpay";
 import { rateLimit } from "@/lib/rate-limit";
 import { getSettings } from "@/lib/settings";
+import { rememberOrderAccess } from "@/lib/order-access";
 
 export async function POST(req: NextRequest) {
   if (!(await rateLimit("checkout", 20, 10 * 60 * 1000)).ok) {
@@ -95,7 +96,8 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const confirmationUrl = `/order/${order.orderNumber}?t=${order.accessToken}&placed=1`;
+  await rememberOrderAccess(order);
+  const confirmationUrl = `/order/${order.orderNumber}?placed=1`;
 
   if (input.paymentMethod === "COD") {
     await confirmOrder(order.id);

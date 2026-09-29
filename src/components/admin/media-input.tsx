@@ -5,7 +5,7 @@ import { ImageIcon, Loader2, Upload, X } from "lucide-react";
 import { toast } from "@/components/providers/toast";
 import { AdminImage } from "@/components/admin/admin-image";
 import { isPreviewableUrl, isVideoUrl, uploadFile } from "@/components/admin/upload";
-import { cn } from "@/lib/utils";
+import { cn, youtubeId } from "@/lib/utils";
 
 /**
  * Image / video field: upload a file (via /api/admin/upload) or paste a URL, with preview.
@@ -54,6 +54,7 @@ export function MediaInput({
   }
 
   const previewable = isPreviewableUrl(url);
+  const yt = previewable ? youtubeId(url) : null;
 
   return (
     <div className="flex gap-3">
@@ -67,6 +68,8 @@ export function MediaInput({
           <span className="absolute inset-0 grid place-items-center text-muted">
             <Loader2 className="size-5 animate-spin" />
           </span>
+        ) : yt ? (
+          <AdminImage src={`https://i.ytimg.com/vi/${yt}/hqdefault.jpg`} alt="Video thumbnail" fill sizes="160px" className="object-cover" />
         ) : previewable && isVideoUrl(url) ? (
           <video src={url} className="size-full object-cover" muted playsInline preload="metadata" />
         ) : previewable ? (

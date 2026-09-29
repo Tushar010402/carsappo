@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Poppins } from "next/font/google";
 import { getSettings } from "@/lib/settings";
-import { Analytics } from "@/components/layout/analytics";
 import { Toaster } from "@/components/providers/toast";
 import "./globals.css";
 
@@ -41,14 +40,12 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const { tracking } = await getSettings();
+export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en-IN" className={`${inter.variable} ${poppins.variable}`}>
       <body className="flex min-h-screen flex-col">
         {children}
         <Toaster />
-        <Analytics tracking={tracking} />
       </body>
     </html>
   );

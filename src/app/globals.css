@@ -160,3 +160,22 @@
     background: #fff;
   }
 }
+
+/* Keep the floating WhatsApp button above the product page's sticky buy bar on phones and tablets. */
+@media (width < 64rem) {
+  body[data-buy-bar] .whatsapp-fab {
+    bottom: 5.5rem;
+  }
+}
+
+/* Respect the OS "reduce motion" setting: no entrance animations, smooth scrolling or long transitions. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

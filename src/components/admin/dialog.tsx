@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useId, useRef, useState, type ReactNode } from "react";
 import { X } from "lucide-react";
 import { buttonClasses, type ButtonSize, type ButtonVariant } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -42,6 +42,7 @@ export function FormDialog({
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const [open, setOpen] = useState(false);
+  const titleId = useId();
   const close = useCallback(() => ref.current?.close(), []);
 
   const triggerCls =
@@ -67,6 +68,7 @@ export function FormDialog({
       </button>
       <dialog
         ref={ref}
+        aria-labelledby={titleId}
         onClose={() => setOpen(false)}
         onClick={(e) => {
           // Click on the backdrop closes the dialog.
@@ -84,7 +86,9 @@ export function FormDialog({
             <div className="flex max-h-[92vh] flex-col">
               <header className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
                 <div>
-                  <h2 className="font-display text-lg font-semibold">{title}</h2>
+                  <h2 id={titleId} className="font-display text-lg font-semibold">
+                    {title}
+                  </h2>
                   {description && <p className="mt-0.5 text-sm text-muted">{description}</p>}
                 </div>
                 <button type="button" onClick={close} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-mist hover:text-ink" aria-label="Close">

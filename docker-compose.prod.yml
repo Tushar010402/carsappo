@@ -1,0 +1,42 @@
+# Single-server production setup (e.g. a Mumbai-region VPS):
+#   cp .env.example .env   # fill in real values; DATABASE_URL is set below
+#   docker compose -f docker-compose.prod.yml up -d --build
+#   docker compose -f docker-compose.prod.yml exec app npm run db:seed   # first run only
+# Put Nginx/Caddy in front for HTTPS and pass X-Real-IP (see README).
+services:
+  app:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://carsappo.com}
+        NEXT_PUBLIC_S3_PUBLIC_HOST: ${NEXT_PUBLIC_S3_PUBLIC_HOST:-}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://carsappo:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/carsappo?schema=public
+      UPLOAD_DIR: /data/uploads
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - uploads:/data/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: carsappo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: carsappo
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U carsappo"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  db:
+  uploads:

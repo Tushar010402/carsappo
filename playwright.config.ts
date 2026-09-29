@@ -3,7 +3,8 @@ import { BASE_URL, E2E_PORT, MOCK_PORT, serverEnv } from "./tests/e2e/env";
 
 /**
  * End-to-end tests against a production build (`npm run test:e2e`).
- * Desktop runs everything; the mobile project re-runs specs tagged @mobile on a phone viewport.
+ * Desktop runs the storefront specs; the mobile project re-runs specs tagged @mobile on a phone viewport;
+ * admin specs run last.
  */
 export default defineConfig({
   testDir: "tests/e2e",
@@ -24,8 +25,10 @@ export default defineConfig({
   },
   projects: [
     { name: "setup", testMatch: /auth\.setup\.ts/ },
-    { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } }, dependencies: ["setup"], testIgnore: /auth\.setup\.ts/ },
-    { name: "mobile", use: { ...devices["Pixel 7"] }, dependencies: ["setup"], grep: /@mobile/, testIgnore: /auth\.setup\.ts/ },
+    { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } }, dependencies: ["setup"], testIgnore: [/auth\.setup\.ts/, /admin-.*\.spec\.ts/] },
+    { name: "mobile", use: { ...devices["Pixel 7"] }, dependencies: ["setup"], grep: /@mobile/, testIgnore: [/auth\.setup\.ts/, /admin-.*\.spec\.ts/] },
+    // Admin specs change store-wide settings (banners, tracking IDs, announcement), so they run after the storefront specs.
+    { name: "admin", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } }, dependencies: ["desktop", "mobile"], testMatch: /admin-.*\.spec\.ts/ },
   ],
   webServer: [
     {

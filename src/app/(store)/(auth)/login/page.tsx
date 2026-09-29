@@ -25,7 +25,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         </>
       }
     >
-      <LoginForm next={next ? safeRedirectPath(next) : undefined} />
+      <LoginForm next={(next && safeRedirectPath(next, "")) || undefined} />
     </AuthShell>
   );
 }
