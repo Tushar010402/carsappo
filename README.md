@@ -106,6 +106,19 @@ CI (`.github/workflows/ci.yml`) runs lint, typecheck, unit tests, build and the 
 
 ## Deployment
 
+### Client preview / staging (Vercel)
+
+```bash
+./scripts/deploy-preview.sh                                   # no accounts: temporary DB + deployment (~24h, claimable)
+VERCEL_TOKEN=… DATABASE_URL=postgres://… ./scripts/deploy-preview.sh   # permanent preview in your Vercel account
+```
+
+The preview runs with demo data, `SITE_ENV=staging` (robots.txt blocks everything and every response carries
+`X-Robots-Tag: noindex`) and prints the admin login. `vercel.json` builds in Singapore (`sin1`), next to a
+Singapore database; `scripts/vercel-build.sh` applies migrations (and seeds when `SEED_ON_BUILD=true`) before
+`next build`. For uploads on Vercel, connect a Blob store (Storage → Blob) — `BLOB_READ_WRITE_TOKEN` is picked up
+automatically — or set the `S3_*` variables.
+
 ### Option A — VPS (recommended for simplicity; e.g. Hostinger / DigitalOcean / AWS Lightsail, Mumbai region)
 
 1. Install Node 20+, PostgreSQL, Nginx and PM2.
@@ -141,9 +154,9 @@ Never set `RATE_LIMIT_DISABLED` in production — it exists only for the test su
 
 ### Option B — Vercel + managed Postgres
 
-Use Neon / Supabase / Vercel Postgres for `DATABASE_URL`, and configure the `S3_*` variables
-(e.g. Cloudflare R2) because serverless hosts have no persistent disk for uploads. Set the build command to
-`prisma migrate deploy && npm run build`. Add `carsappo.com` in Vercel → Domains and update DNS as instructed.
+Use Neon / Supabase / Prisma Postgres (Singapore region) for `DATABASE_URL`, and connect a Vercel Blob store (or set
+the `S3_*` variables, e.g. Cloudflare R2) because serverless hosts have no persistent disk for uploads. `vercel.json`
+already runs migrations during the build. Add `carsappo.com` in Vercel → Domains and update DNS as instructed.
 
 ## Integrations checklist
 

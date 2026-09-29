@@ -3,10 +3,12 @@ import crypto from "node:crypto";
 import path from "node:path";
 import { mkdir, writeFile } from "node:fs/promises";
 import { AwsClient } from "aws4fetch";
+import { put } from "@vercel/blob";
 
 /**
  * File uploads for the admin panel.
  * - If S3_* env vars are set, uploads go to any S3-compatible bucket (AWS S3, Cloudflare R2, DigitalOcean Spaces).
+ * - Else on Vercel with a connected Blob store (BLOB_READ_WRITE_TOKEN), uploads go to Vercel Blob.
  * - Otherwise files are written to UPLOAD_DIR (default ./uploads) and served by the /uploads/[...path] route.
  */
 
@@ -60,6 +62,13 @@ export async function saveUpload(file: File, folder = "misc"): Promise<string> {
     const publicBase = (process.env.S3_PUBLIC_URL || `${endpoint}/${process.env.S3_BUCKET}`).replace(/\/$/, "");
     return `${publicBase}/${key}`;
   }
+
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    const blob = await put(key, bytes, { access: "public", contentType: file.type, addRandomSuffix: false, cacheControlMaxAge: 31536000 });
+    return blob.url;
+  }
+  // Serverless hosts have no persistent disk.
+  if (process.env.VERCEL) throw new Error("Uploads need storage: connect a Vercel Blob store (Storage → Blob) or set the S3_* variables.");
 
   const target = path.join(uploadDir(), key);
   await mkdir(path.dirname(target), { recursive: true });

@@ -15,9 +15,14 @@ export function slugify(input: string) {
     .slice(0, 80);
 }
 
+/** Public base URL: NEXT_PUBLIC_SITE_URL, else the Vercel project/deployment URL (previews), else localhost. */
+export function siteUrl() {
+  const vercel = process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL || process.env.NEXT_PUBLIC_VERCEL_URL;
+  return (process.env.NEXT_PUBLIC_SITE_URL || (vercel ? `https://${vercel}` : "http://localhost:3000")).replace(/\/$/, "");
+}
+
 export function absoluteUrl(path = "/") {
-  const base = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
-  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
+  return `${siteUrl()}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 /** Same-site path to send the user to after login, or `fallback` for anything that could leave the site. */

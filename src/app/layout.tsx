@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Poppins } from "next/font/google";
 import { getSettings } from "@/lib/settings";
+import { siteUrl } from "@/lib/utils";
 import { Toaster } from "@/components/providers/toast";
 import "./globals.css";
 
@@ -15,7 +16,7 @@ const poppins = Poppins({
 export async function generateMetadata(): Promise<Metadata> {
   const { seo, store } = await getSettings();
   return {
-    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+    metadataBase: new URL(siteUrl()),
     title: { default: seo.defaultTitle, template: seo.titleTemplate || "%s | Carsappo" },
     description: seo.defaultDescription,
     keywords: seo.keywords,

@@ -70,6 +70,11 @@ test.describe("Responsive layout", () => {
       expect(box?.height, name).toBeGreaterThanOrEqual(40);
       expect(box?.width, name).toBeGreaterThanOrEqual(40);
     }
+    // The main buy buttons keep a full-size tap target when stacked on a phone.
+    for (const name of ["Add to cart", "Buy now", "Wishlist", "WhatsApp Enquiry"]) {
+      const box = await page.locator("#buy-box").getByRole(name === "WhatsApp Enquiry" ? "link" : "button", { name }).boundingBox();
+      expect(box?.height, name).toBeGreaterThanOrEqual(44);
+    }
     // Scroll past the buy box: the sticky bar appears and nothing covers its button.
     await page.locator("#specifications").scrollIntoViewIfNeeded();
     const add = page.locator("div.fixed.bottom-0").getByRole("button", { name: "Add to cart" });

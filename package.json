@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
+    "@vercel/blob": "^2.8.0",
     "aws4fetch": "^1.0.20",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",

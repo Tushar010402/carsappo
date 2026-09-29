@@ -84,7 +84,8 @@ export function AddToCartPanel({ product }: { product: CartProduct }) {
       <Button
         size="lg"
         variant="dark"
-        className="flex-1"
+        // Grow side by side from sm up; on phones the column stacks and flex-1 would override the button height.
+        className="sm:flex-1"
         onClick={() => {
           add(product, qty);
           trackAdd(product, qty);
@@ -96,7 +97,7 @@ export function AddToCartPanel({ product }: { product: CartProduct }) {
       </Button>
       <Button
         size="lg"
-        className="flex-1"
+        className="sm:flex-1"
         onClick={() => {
           add(product, qty);
           trackAdd(product, qty);
