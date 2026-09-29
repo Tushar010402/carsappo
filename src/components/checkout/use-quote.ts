@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { Quote } from "@/lib/pricing";
 import { useCart } from "@/store/cart";
+import { toast } from "@/components/providers/toast";
 
 export type PublicCoupon = { code: string; description: string; minOrder: number };
 
@@ -45,7 +46,12 @@ export function useQuote(opts: { pincode?: string | null; paymentMethod?: "RAZOR
             const item = items.find((i) => i.productId === l.productId);
             return !item || item.price !== l.price || item.quantity !== l.quantity || item.stock !== l.stock;
           });
-        if (changed) syncFromQuote(data.quote.lines, data.quote.removed);
+        if (changed) {
+          // Tell the shopper why an item vanished (sold out / unlisted) — otherwise it just disappears.
+          const gone = items.filter((i) => data.quote.removed.includes(i.productId)).map((i) => i.name);
+          if (gone.length) toast(`${gone.join(", ")} ${gone.length > 1 ? "are" : "is"} no longer available and ${gone.length > 1 ? "were" : "was"} removed from your cart.`, "error");
+          syncFromQuote(data.quote.lines, data.quote.removed);
+        }
       } catch {
         /* aborted or offline — keep the previous quote */
       }

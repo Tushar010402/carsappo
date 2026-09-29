@@ -15,7 +15,9 @@
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
     "placeholders": "tsx scripts/generate-placeholders.ts",
-    "test": "tsx --test tests/*.test.ts"
+    "test": "tsx --test tests/*.test.ts",
+    "test:e2e": "tsx tests/e2e/prepare.ts && playwright test",
+    "test:e2e:rerun": "playwright test"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -41,6 +43,8 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.56.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^22.20.4",
     "@types/nodemailer": "^8.0.2",

@@ -6,7 +6,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { createSession, destroySession, getCurrentUser, hashPassword, verifyPassword } from "@/lib/auth";
 import { rateLimit } from "@/lib/rate-limit";
-import { emailSchema, fieldErrors, loginSchema, passwordSchema, registerSchema, type FormState } from "@/lib/validators";
+import { emailSchema, failure, fieldErrors, loginSchema, passwordSchema, registerSchema, type FormState } from "@/lib/validators";
 import { sendMail, simpleEmail } from "@/lib/mailer";
 import { absoluteUrl, safeRedirectPath } from "@/lib/utils";
 
@@ -24,15 +24,15 @@ async function mergeGuestWishlist(userId: string, raw: FormDataEntryValue | null
 
 export async function login(_: FormState, formData: FormData): Promise<FormState> {
   if (!(await rateLimit("login", 10, 15 * 60 * 1000)).ok) {
-    return { message: "Too many attempts. Please wait a few minutes and try again." };
+    return failure(formData, { message: "Too many attempts. Please wait a few minutes and try again." });
   }
   const parsed = loginSchema.safeParse({ email: formData.get("email"), password: formData.get("password") });
-  if (!parsed.success) return { errors: fieldErrors(parsed.error) };
+  if (!parsed.success) return failure(formData, { errors: fieldErrors(parsed.error) });
 
   const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
   // Always run bcrypt to keep response timing uniform.
   const valid = await verifyPassword(parsed.data.password, user?.passwordHash ?? "$2b$11$invalidinvalidinvalidinvalidinvalidinvalidinvalidinv");
-  if (!user || !valid) return { message: "Incorrect email or password." };
+  if (!user || !valid) return failure(formData, { message: "Incorrect email or password." });
 
   await createSession(user);
   await mergeGuestWishlist(user.id, formData.get("wishlist"));
@@ -50,10 +50,10 @@ export async function register(_: FormState, formData: FormData): Promise<FormSt
     phone: formData.get("phone") ?? "",
     password: formData.get("password"),
   });
-  if (!parsed.success) return { errors: fieldErrors(parsed.error) };
+  if (!parsed.success) return failure(formData, { errors: fieldErrors(parsed.error) });
 
   const exists = await prisma.user.findUnique({ where: { email: parsed.data.email }, select: { id: true } });
-  if (exists) return { errors: { email: "An account with this email already exists. Try logging in." } };
+  if (exists) return failure(formData, { errors: { email: "An account with this email already exists. Try logging in." } });
 
   const user = await prisma.user.create({
     data: {
@@ -82,7 +82,7 @@ function hashToken(token: string) {
 export async function requestPasswordReset(_: FormState, formData: FormData): Promise<FormState> {
   if (!(await rateLimit("reset", 5, 60 * 60 * 1000)).ok) return { message: "Too many requests. Please try again later." };
   const parsed = emailSchema.safeParse(formData.get("email"));
-  if (!parsed.success) return { errors: { email: "Enter a valid email address" } };
+  if (!parsed.success) return failure(formData, { errors: { email: "Enter a valid email address" } });
 
   const user = await prisma.user.findUnique({ where: { email: parsed.data } });
   if (user) {

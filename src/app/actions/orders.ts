@@ -14,7 +14,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { RETURN_REASONS } from "@/lib/constants";
 import { adminEmail, sendMail, simpleEmail } from "@/lib/mailer";
 import { absoluteUrl } from "@/lib/utils";
-import type { FormState } from "@/lib/validators";
+import { failure, type FormState } from "@/lib/validators";
 
 export async function cancelOrder(_: FormState, formData: FormData): Promise<FormState> {
   const orderNumber = String(formData.get("orderNumber") ?? "");
@@ -55,7 +55,7 @@ export async function requestReturn(_: FormState, formData: FormData): Promise<F
   const user = await getCurrentUser();
   if (!user) return { message: "Please log in to request a return." };
   const parsed = returnSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { errors: { reason: parsed.error.issues[0].message } };
+  if (!parsed.success) return failure(formData, { errors: { reason: parsed.error.issues[0].message } });
 
   const order = await prisma.order.findFirst({
     where: { orderNumber: parsed.data.orderNumber, userId: user.id },
@@ -99,11 +99,11 @@ export async function lookupOrder(_: FormState, formData: FormData): Promise<For
   if (!(await rateLimit("track", 10, 10 * 60 * 1000)).ok) return { message: "Too many attempts. Please try again later." };
   const orderNumber = String(formData.get("orderNumber") ?? "").trim().toUpperCase();
   const contact = String(formData.get("contact") ?? "").trim().toLowerCase();
-  if (!orderNumber || !contact) return { message: "Enter your order number and email or phone." };
+  if (!orderNumber || !contact) return failure(formData, { message: "Enter your order number and email or phone." });
   const order = await prisma.order.findUnique({ where: { orderNumber } });
   const phoneDigits = contact.replace(/\D/g, "").slice(-10);
   const matches =
     order && (order.email.toLowerCase() === contact || (phoneDigits.length === 10 && (order.phone.endsWith(phoneDigits) || order.shipPhone.endsWith(phoneDigits))));
-  if (!order || !matches) return { message: "We couldn't find an order with those details." };
+  if (!order || !matches) return failure(formData, { message: "We couldn't find an order with those details." });
   redirect(`/order/${order.orderNumber}?t=${order.accessToken}`);
 }

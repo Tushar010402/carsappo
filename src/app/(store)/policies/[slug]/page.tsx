@@ -16,7 +16,8 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps<"/policies/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const page = POLICY_PAGES.find((p) => p.slug === slug);
-  if (!page) return {};
+  // Resolving 404s here (before the page streams) returns a real 404 status instead of a soft 404.
+  if (!page) notFound();
   return pageMetadata({ title: page.title, description: `${page.title} for Carsappo — car accessories and car care in India.`, path: `/policies/${slug}` });
 }
 

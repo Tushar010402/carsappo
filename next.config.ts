@@ -11,6 +11,8 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Separate build folder for end-to-end test runs (see tests/e2e/prepare.ts).
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   poweredByHeader: false,
   // Always render <title>/<meta> in <head> (no metadata streaming) so every crawler and
   // link-preview bot sees product SEO tags without executing JavaScript.

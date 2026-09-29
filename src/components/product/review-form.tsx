@@ -38,14 +38,14 @@ export function ReviewForm({ productId, defaultName }: { productId: string; defa
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Name" error={state.errors?.name} htmlFor="rv-name">
-          <Input id="rv-name" name="name" defaultValue={defaultName} required invalid={!!state.errors?.name} />
+          <Input id="rv-name" name="name" defaultValue={state.values?.name ?? defaultName} required invalid={!!state.errors?.name} />
         </Field>
         <Field label="Title (optional)" htmlFor="rv-title">
-          <Input id="rv-title" name="title" placeholder="Summarise your experience" />
+          <Input id="rv-title" name="title" defaultValue={state.values?.title} placeholder="Summarise your experience" />
         </Field>
       </div>
       <Field label="Review" error={state.errors?.body} htmlFor="rv-body">
-        <Textarea id="rv-body" name="body" required placeholder="How was the fit, quality and finish?" invalid={!!state.errors?.body} />
+        <Textarea id="rv-body" name="body" defaultValue={state.values?.body} required placeholder="How was the fit, quality and finish?" invalid={!!state.errors?.body} />
       </Field>
       <FormMessage state={state} />
       <SubmitButton variant="dark" pendingText="Submitting…">

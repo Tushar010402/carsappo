@@ -1,7 +1,8 @@
 "use client";
 
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { persist } from "zustand/middleware";
+import { hydrationSafeStorage } from "@/store/storage";
 
 export type CartItem = {
   productId: string;
@@ -80,7 +81,7 @@ export const useCart = create<CartState>()(
     }),
     {
       name: "carsappo-cart",
-      storage: createJSONStorage(() => localStorage),
+      storage: hydrationSafeStorage((): boolean => useCart.persist.hasHydrated()),
       partialize: (s) => ({ items: s.items, couponCode: s.couponCode, pincode: s.pincode }),
       skipHydration: true,
       onRehydrateStorage: () => () => {

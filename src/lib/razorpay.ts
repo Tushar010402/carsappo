@@ -1,7 +1,8 @@
 import "server-only";
 import crypto from "node:crypto";
 
-const API = "https://api.razorpay.com/v1";
+// Overridable only so automated tests can point at a local stand-in.
+const API = process.env.RAZORPAY_API_BASE || "https://api.razorpay.com/v1";
 
 export function razorpayEnabled() {
   return Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET);

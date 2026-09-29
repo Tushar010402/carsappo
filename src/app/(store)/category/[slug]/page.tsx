@@ -13,7 +13,8 @@ const getCategory = cache((slug: string) =>
 export async function generateMetadata({ params, searchParams }: PageProps<"/category/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const category = await getCategory(slug);
-  if (!category) return {};
+  // Resolving 404s here (before the page streams) returns a real 404 status instead of a soft 404.
+  if (!category) notFound();
   const sp = await searchParams;
   return pageMetadata({
     title: category.metaTitle || `${category.name} — Buy Online in India`,

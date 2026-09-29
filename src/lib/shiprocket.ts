@@ -1,7 +1,8 @@
 import "server-only";
 import type { Order, OrderItem } from "@prisma/client";
 
-const API = "https://apiv2.shiprocket.in/v1/external";
+// Overridable only so automated tests can point at a local stand-in.
+const API = process.env.SHIPROCKET_API_BASE || "https://apiv2.shiprocket.in/v1/external";
 
 export function shiprocketEnabled() {
   return Boolean(process.env.SHIPROCKET_EMAIL && process.env.SHIPROCKET_PASSWORD);

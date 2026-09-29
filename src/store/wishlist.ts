@@ -1,7 +1,8 @@
 "use client";
 
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { persist } from "zustand/middleware";
+import { hydrationSafeStorage } from "@/store/storage";
 
 type WishlistState = {
   ids: string[];
@@ -28,7 +29,7 @@ export const useWishlist = create<WishlistState>()(
     }),
     {
       name: "carsappo-wishlist",
-      storage: createJSONStorage(() => localStorage),
+      storage: hydrationSafeStorage((): boolean => useWishlist.persist.hasHydrated()),
       partialize: (s) => ({ ids: s.ids }),
       skipHydration: true,
       onRehydrateStorage: () => () => {

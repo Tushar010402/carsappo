@@ -13,6 +13,7 @@ export function NewsletterForm() {
         <input
           type="email"
           name="email"
+          defaultValue={state.values?.email}
           required
           placeholder="Your email address"
           aria-label="Email address"

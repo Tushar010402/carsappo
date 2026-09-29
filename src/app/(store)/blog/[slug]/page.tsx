@@ -20,7 +20,8 @@ const getPost = cache((slug: string) =>
 
 export async function generateMetadata({ params }: PageProps<"/blog/[slug]">): Promise<Metadata> {
   const post = await getPost((await params).slug);
-  if (!post) return {};
+  // Resolving 404s here (before the page streams) returns a real 404 status instead of a soft 404.
+  if (!post) notFound();
   return pageMetadata({
     title: post.metaTitle || post.title,
     description: post.metaDescription || post.excerpt,

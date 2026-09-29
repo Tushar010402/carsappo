@@ -39,7 +39,7 @@ export function LoginForm({ next }: { next?: string }) {
       {next && <input type="hidden" name="next" value={next} />}
       <WishlistField />
       <Field label="Email" error={state.errors?.email} htmlFor="email">
-        <Input id="email" name="email" type="email" autoComplete="email" required invalid={!!state.errors?.email} />
+        <Input id="email" name="email" type="email" autoComplete="email" defaultValue={state.values?.email} required invalid={!!state.errors?.email} />
       </Field>
       <Field
         label={
@@ -70,13 +70,13 @@ export function RegisterForm({ next, email }: { next?: string; email?: string })
       {next && <input type="hidden" name="next" value={next} />}
       <WishlistField />
       <Field label="Full name" error={state.errors?.name} htmlFor="name">
-        <Input id="name" name="name" autoComplete="name" required invalid={!!state.errors?.name} />
+        <Input id="name" name="name" autoComplete="name" defaultValue={state.values?.name} required invalid={!!state.errors?.name} />
       </Field>
       <Field label="Email" error={state.errors?.email} htmlFor="email">
-        <Input id="email" name="email" type="email" autoComplete="email" defaultValue={email} required invalid={!!state.errors?.email} />
+        <Input id="email" name="email" type="email" autoComplete="email" defaultValue={state.values?.email ?? email} required invalid={!!state.errors?.email} />
       </Field>
       <Field label="Mobile number (optional)" error={state.errors?.phone} htmlFor="phone">
-        <Input id="phone" name="phone" type="tel" autoComplete="tel" invalid={!!state.errors?.phone} />
+        <Input id="phone" name="phone" type="tel" autoComplete="tel" defaultValue={state.values?.phone} invalid={!!state.errors?.phone} />
       </Field>
       <Field label="Password" error={state.errors?.password} hint="At least 8 characters." htmlFor="password">
         <PasswordInput id="password" name="password" autoComplete="new-password" invalid={!!state.errors?.password} />
@@ -106,7 +106,7 @@ export function ForgotPasswordForm() {
   return (
     <form action={action} className="space-y-5">
       <Field label="Email" error={state.errors?.email} htmlFor="email">
-        <Input id="email" name="email" type="email" autoComplete="email" required invalid={!!state.errors?.email} />
+        <Input id="email" name="email" type="email" autoComplete="email" defaultValue={state.values?.email} required invalid={!!state.errors?.email} />
       </Field>
       <FormMessage state={state} />
       <SubmitButton size="lg" className="w-full" pendingText="Sending…">

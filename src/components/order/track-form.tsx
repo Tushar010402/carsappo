@@ -11,10 +11,10 @@ export function TrackOrderForm() {
   return (
     <form action={action} className="space-y-4">
       <Field label="Order number" htmlFor="t-order">
-        <Input id="t-order" name="orderNumber" placeholder="e.g. CS100123" required className="uppercase" />
+        <Input id="t-order" name="orderNumber" defaultValue={state.values?.orderNumber} placeholder="e.g. CS100123" required className="uppercase" />
       </Field>
       <Field label="Email or mobile number used for the order" htmlFor="t-contact">
-        <Input id="t-contact" name="contact" required />
+        <Input id="t-contact" name="contact" defaultValue={state.values?.contact} required />
       </Field>
       <FormMessage state={state} />
       <SubmitButton size="lg" className="w-full" pendingText="Finding your order…">

@@ -36,7 +36,8 @@ const getProduct = cache(getProductBySlug);
 export async function generateMetadata({ params }: PageProps<"/product/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProduct(slug);
-  if (!product) return { title: "Product not found" };
+  // Resolving 404s here (before the page streams) returns a real 404 status instead of a soft 404.
+  if (!product) notFound();
   return pageMetadata({
     title: product.metaTitle || product.name,
     description: product.metaDescription || product.shortDescription,

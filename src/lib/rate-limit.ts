@@ -5,12 +5,22 @@ import { headers } from "next/headers";
 // swap for Redis/Upstash if the site is ever scaled horizontally.
 const buckets = new Map<string, { count: number; resetAt: number }>();
 
+/**
+ * Client IP as reported by the reverse proxy. `x-real-ip` (set by Vercel and by the
+ * recommended Nginx config) can't be spoofed by the client; otherwise use the *last*
+ * `x-forwarded-for` hop, which is the one appended by our own proxy.
+ */
 export async function clientIp() {
   const h = await headers();
-  return h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "unknown";
+  const real = h.get("x-real-ip")?.trim();
+  if (real) return real;
+  const hops = h.get("x-forwarded-for")?.split(",").map((s) => s.trim()).filter(Boolean);
+  return hops?.at(-1) || "unknown";
 }
 
 export async function rateLimit(key: string, limit: number, windowMs: number) {
+  // Only for automated end-to-end test runs, which submit many forms from one IP. Never set in production.
+  if (process.env.RATE_LIMIT_DISABLED === "true") return { ok: true };
   const ip = await clientIp();
   const id = `${key}:${ip}`;
   const now = Date.now();

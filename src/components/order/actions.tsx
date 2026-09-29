@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { CreditCard, Loader2 } from "lucide-react";
 import { cancelOrder, requestReturn } from "@/app/actions/orders";
 import { payWithRazorpay } from "@/components/checkout/razorpay";
+import { toast } from "@/components/providers/toast";
 import { Button } from "@/components/ui/button";
 import { Field, FormMessage, Select, Textarea } from "@/components/ui/field";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -12,7 +13,12 @@ import { RETURN_REASONS } from "@/lib/constants";
 import type { FormState } from "@/lib/validators";
 
 export function CancelOrderButton({ orderNumber, token }: { orderNumber: string; token?: string }) {
-  const [state, action] = useActionState<FormState, FormData>(cancelOrder, {});
+  const [state, action] = useActionState<FormState, FormData>(async (prev, formData) => {
+    const result = await cancelOrder(prev, formData);
+    // A successful cancel revalidates the page, which unmounts this button — so confirm with a toast that outlives it.
+    if (result.ok && result.message) toast(result.message);
+    return result;
+  }, {});
   const [confirming, setConfirming] = useState(false);
   if (state.message) return <FormMessage state={state} />;
   return confirming ? (
@@ -77,13 +83,18 @@ export function PayNowButton({ orderNumber, token, amountLabel }: { orderNumber:
 }
 
 export function ReturnRequestForm({ orderNumber }: { orderNumber: string }) {
-  const [state, action] = useActionState<FormState, FormData>(requestReturn, {});
+  const [state, action] = useActionState<FormState, FormData>(async (prev, formData) => {
+    const result = await requestReturn(prev, formData);
+    // Success revalidates the page and hides this form, so confirm with a toast as well.
+    if (result.ok && result.message) toast(result.message);
+    return result;
+  }, {});
   if (state.ok) return <FormMessage state={state} />;
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="orderNumber" value={orderNumber} />
       <Field label="Reason" error={state.errors?.reason} htmlFor="ret-reason">
-        <Select id="ret-reason" name="reason" required defaultValue="">
+        <Select id="ret-reason" name="reason" required defaultValue={state.values?.reason ?? ""}>
           <option value="" disabled>
             Select a reason
           </option>
@@ -93,7 +104,7 @@ export function ReturnRequestForm({ orderNumber }: { orderNumber: string }) {
         </Select>
       </Field>
       <Field label="Details (optional)" htmlFor="ret-details">
-        <Textarea id="ret-details" name="details" className="min-h-20" placeholder="Tell us what went wrong. You can share photos with us on WhatsApp." />
+        <Textarea id="ret-details" name="details" defaultValue={state.values?.details} className="min-h-20" placeholder="Tell us what went wrong. You can share photos with us on WhatsApp." />
       </Field>
       <FormMessage state={state} />
       <SubmitButton variant="dark" pendingText="Submitting…">

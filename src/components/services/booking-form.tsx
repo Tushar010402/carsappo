@@ -81,7 +81,7 @@ export function BookingForm({
           </Select>
         </Field>
         <Field label="Plan" htmlFor="b-plan">
-          <Select id="b-plan" name="planId" defaultValue={defaultPlan && typePlans.some((p) => p.id === defaultPlan) ? defaultPlan : typePlans[0]?.id ?? ""} key={type}>
+          <Select id="b-plan" name="planId" defaultValue={state.values?.planId ?? (defaultPlan && typePlans.some((p) => p.id === defaultPlan) ? defaultPlan : (typePlans[0]?.id ?? ""))} key={type}>
             {typePlans.length === 0 && <option value="">Custom — we&apos;ll share a quote</option>}
             {typePlans.map((p) => (
               <option key={p.id} value={p.id}>
@@ -95,13 +95,13 @@ export function BookingForm({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Your name" error={e.name} htmlFor="b-name">
-          <Input id="b-name" name="name" autoComplete="name" required invalid={!!e.name} />
+          <Input id="b-name" name="name" autoComplete="name" defaultValue={state.values?.name} required invalid={!!e.name} />
         </Field>
         <Field label="Mobile number" error={e.phone} htmlFor="b-phone">
-          <Input id="b-phone" name="phone" type="tel" autoComplete="tel" required invalid={!!e.phone} />
+          <Input id="b-phone" name="phone" type="tel" autoComplete="tel" defaultValue={state.values?.phone} required invalid={!!e.phone} />
         </Field>
         <Field label="Email (optional)" error={e.email} htmlFor="b-email">
-          <Input id="b-email" name="email" type="email" autoComplete="email" invalid={!!e.email} />
+          <Input id="b-email" name="email" type="email" autoComplete="email" defaultValue={state.values?.email} invalid={!!e.email} />
         </Field>
         <Field
           label="Pincode"
@@ -112,22 +112,22 @@ export function BookingForm({
           <Input id="b-pin" name="pincode" inputMode="numeric" maxLength={6} required value={pin} onChange={(ev) => setPin(ev.target.value.replace(/\D/g, ""))} invalid={!!e.pincode || (pinChecked && !pinOk)} />
         </Field>
         <Field label="Full address" error={e.address} className="sm:col-span-2" htmlFor="b-address">
-          <Input id="b-address" name="address" autoComplete="street-address" required placeholder="Flat / tower, sector" invalid={!!e.address} />
+          <Input id="b-address" name="address" autoComplete="street-address" defaultValue={state.values?.address} required placeholder="Flat / tower, sector" invalid={!!e.address} />
         </Field>
         <Field label="Society / parking details (optional)" htmlFor="b-society">
-          <Input id="b-society" name="society" placeholder="e.g. Gaur City 2, basement B2, slot 114" />
+          <Input id="b-society" name="society" defaultValue={state.values?.society} placeholder="e.g. Gaur City 2, basement B2, slot 114" />
         </Field>
         <Field label="Car model" error={e.carModel} htmlFor="b-car">
-          <Input id="b-car" name="carModel" required placeholder="e.g. Hyundai Creta" invalid={!!e.carModel} />
+          <Input id="b-car" name="carModel" defaultValue={state.values?.carModel} required placeholder="e.g. Hyundai Creta" invalid={!!e.carModel} />
         </Field>
         <Field label="Car number (optional)" htmlFor="b-carno">
-          <Input id="b-carno" name="carNumber" placeholder="UP16 AB 1234" className="uppercase" />
+          <Input id="b-carno" name="carNumber" defaultValue={state.values?.carNumber} placeholder="UP16 AB 1234" className="uppercase" />
         </Field>
         <Field label="Start date" error={e.preferredDate} htmlFor="b-date">
-          <Input id="b-date" name="preferredDate" type="date" min={today} defaultValue={today} required invalid={!!e.preferredDate} />
+          <Input id="b-date" name="preferredDate" type="date" min={today} defaultValue={state.values?.preferredDate ?? today} required invalid={!!e.preferredDate} />
         </Field>
         <Field label="Preferred time slot" error={e.preferredSlot} htmlFor="b-slot">
-          <Select id="b-slot" name="preferredSlot" defaultValue={SERVICE_SLOTS[0]}>
+          <Select id="b-slot" name="preferredSlot" defaultValue={state.values?.preferredSlot ?? SERVICE_SLOTS[0]}>
             {SERVICE_SLOTS.map((s) => (
               <option key={s}>{s}</option>
             ))}
@@ -135,7 +135,7 @@ export function BookingForm({
         </Field>
       </div>
       <Field label="Anything else? (optional)" htmlFor="b-notes">
-        <Textarea id="b-notes" name="notes" className="min-h-20" placeholder="Access instructions, key handover, special requests…" />
+        <Textarea id="b-notes" name="notes" defaultValue={state.values?.notes} className="min-h-20" placeholder="Access instructions, key handover, special requests…" />
       </Field>
       <FormMessage state={state} />
       <div className="flex flex-wrap items-center gap-4">

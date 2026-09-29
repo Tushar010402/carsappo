@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { rateLimit } from "@/lib/rate-limit";
-import { bookingSchema, contactSchema, emailSchema, fieldErrors, reviewSchema, type FormState } from "@/lib/validators";
+import { bookingSchema, contactSchema, emailSchema, failure, fieldErrors, reviewSchema, type FormState } from "@/lib/validators";
 import { adminEmail, sendMail, simpleEmail } from "@/lib/mailer";
 import { getSettings, servicePincodes } from "@/lib/settings";
 import { generateBookingNumber } from "@/lib/orders";
@@ -15,7 +15,7 @@ import { serviceLabel } from "@/lib/constants";
 export async function subscribeNewsletter(_: FormState, formData: FormData): Promise<FormState> {
   if (!(await rateLimit("newsletter", 5, 10 * 60 * 1000)).ok) return { message: "Please try again in a few minutes." };
   const email = emailSchema.safeParse(formData.get("email"));
-  if (!email.success) return { message: "Enter a valid email address." };
+  if (!email.success) return failure(formData, { message: "Enter a valid email address." });
   await prisma.newsletterSubscriber.upsert({ where: { email: email.data }, create: { email: email.data }, update: {} });
   return { ok: true, message: "You're in! Watch your inbox for car care tips and offers." };
 }
@@ -23,7 +23,7 @@ export async function subscribeNewsletter(_: FormState, formData: FormData): Pro
 export async function submitContact(_: FormState, formData: FormData): Promise<FormState> {
   if (!(await rateLimit("contact", 5, 10 * 60 * 1000)).ok) return { message: "Please wait a few minutes before sending another message." };
   const parsed = contactSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { errors: fieldErrors(parsed.error) };
+  if (!parsed.success) return failure(formData, { errors: fieldErrors(parsed.error) });
   const msg = await prisma.contactMessage.create({ data: parsed.data });
   const admin = adminEmail();
   if (admin) {
@@ -42,20 +42,20 @@ export type BookingState = FormState & { bookingNumber?: string };
 export async function createBooking(_: BookingState, formData: FormData): Promise<BookingState> {
   if (!(await rateLimit("booking", 5, 10 * 60 * 1000)).ok) return { message: "Please wait a few minutes before booking again." };
   const parsed = bookingSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { errors: fieldErrors(parsed.error) };
+  if (!parsed.success) return failure(formData, { errors: fieldErrors(parsed.error) });
   const data = parsed.data;
 
   const settings = await getSettings();
   if (!servicePincodes(settings).includes(data.pincode)) {
-    return {
+    return failure(formData, {
       errors: {
         pincode: "Sorry — daily car cleaning is currently available only in Greater Noida. Leave us a message and we'll notify you when we reach your area.",
       },
-    };
+    });
   }
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  if (data.preferredDate < today) return { errors: { preferredDate: "Choose today or a future date" } };
+  if (data.preferredDate < today) return failure(formData, { errors: { preferredDate: "Choose today or a future date" } });
 
   let planId: string | undefined;
   if (data.planId) {
@@ -108,7 +108,7 @@ export async function createBooking(_: BookingState, formData: FormData): Promis
 export async function submitReview(_: FormState, formData: FormData): Promise<FormState> {
   if (!(await rateLimit("review", 5, 60 * 60 * 1000)).ok) return { message: "Please try again later." };
   const parsed = reviewSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { errors: fieldErrors(parsed.error) };
+  if (!parsed.success) return failure(formData, { errors: fieldErrors(parsed.error) });
   const product = await prisma.product.findUnique({ where: { id: parsed.data.productId }, select: { id: true, slug: true } });
   if (!product) return { message: "Product not found." };
 

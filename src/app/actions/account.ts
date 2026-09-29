@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { addressSchema, fieldErrors, phoneSchema, type FormState } from "@/lib/validators";
+import { addressSchema, failure, fieldErrors, phoneSchema, type FormState } from "@/lib/validators";
 
 export async function updateProfile(_: FormState, formData: FormData): Promise<FormState> {
   const user = await getCurrentUser();
@@ -15,7 +15,7 @@ export async function updateProfile(_: FormState, formData: FormData): Promise<F
       phone: phoneSchema.optional().or(z.literal("").transform(() => undefined)),
     })
     .safeParse({ name: formData.get("name"), phone: formData.get("phone") ?? "" });
-  if (!parsed.success) return { errors: fieldErrors(parsed.error) };
+  if (!parsed.success) return failure(formData, { errors: fieldErrors(parsed.error) });
   await prisma.user.update({ where: { id: user.id }, data: { name: parsed.data.name, phone: parsed.data.phone ?? null } });
   revalidatePath("/account");
   return { ok: true, message: "Profile updated." };

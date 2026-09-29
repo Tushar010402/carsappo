@@ -131,4 +131,22 @@ export type FormState = {
   ok?: boolean;
   message?: string;
   errors?: Record<string, string>;
+  /** Submitted values, echoed back on failure so React's post-action form reset doesn't wipe the user's input. */
+  values?: Record<string, string>;
 };
+
+const NEVER_ECHO = new Set(["password", "current", "token"]);
+
+/** Plain-text fields from a submission (excluding passwords/tokens and React's internal $ACTION fields). */
+export function echoValues(formData: FormData): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [key, value] of formData.entries()) {
+    if (typeof value === "string" && !key.startsWith("$ACTION") && !NEVER_ECHO.has(key)) out[key] = value;
+  }
+  return out;
+}
+
+/** A failed form result that keeps what the user typed. */
+export function failure(formData: FormData, result: Omit<FormState, "ok" | "values">): FormState {
+  return { ...result, values: echoValues(formData) };
+}

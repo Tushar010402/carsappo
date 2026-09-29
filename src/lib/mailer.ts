@@ -1,4 +1,7 @@
 import "server-only";
+import crypto from "node:crypto";
+import path from "node:path";
+import { mkdir, writeFile } from "node:fs/promises";
 import nodemailer from "nodemailer";
 import { absoluteUrl } from "@/lib/utils";
 import { formatINR } from "@/lib/format";
@@ -18,7 +21,21 @@ function getTransporter() {
   return transporter;
 }
 
+/** Development/test: also write every email as JSON into MAIL_OUTBOX_DIR so it can be inspected. */
+async function writeToOutbox(args: { to: string; subject: string; html: string }) {
+  const dir = process.env.MAIL_OUTBOX_DIR;
+  if (!dir) return;
+  try {
+    await mkdir(dir, { recursive: true });
+    const file = path.join(dir, `${Date.now()}-${crypto.randomUUID()}.json`);
+    await writeFile(file, JSON.stringify({ ...args, sentAt: new Date().toISOString() }));
+  } catch (err) {
+    console.error("[mail] could not write outbox", err);
+  }
+}
+
 export async function sendMail(args: { to: string; subject: string; html: string; replyTo?: string }) {
+  await writeToOutbox(args);
   const t = getTransporter();
   if (!t) {
     console.info(`[mail] SMTP not configured — would send "${args.subject}" to ${args.to}`);

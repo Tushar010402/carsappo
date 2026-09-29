@@ -13,7 +13,7 @@ export default async function AccountLayout({ children }: LayoutProps<"/account"
   return (
     <div className="container-x py-8 sm:py-12">
       <div className="grid gap-8 lg:grid-cols-[240px_1fr] lg:gap-12">
-        <aside className="lg:sticky lg:top-24 lg:self-start">
+        <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
           <div className="mb-4 hidden items-center gap-3 lg:flex">
             <span className="grid size-11 place-items-center rounded-full bg-brand font-display text-lg font-semibold">{user.name.charAt(0).toUpperCase()}</span>
             <div className="min-w-0">

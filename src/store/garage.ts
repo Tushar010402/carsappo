@@ -1,7 +1,8 @@
 "use client";
 
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { persist } from "zustand/middleware";
+import { hydrationSafeStorage } from "@/store/storage";
 
 export type GarageVehicle = {
   make: string;
@@ -24,7 +25,7 @@ export const useGarage = create<GarageState>()(
       vehicle: null,
       setVehicle: (vehicle) => set({ vehicle }),
     }),
-    { name: "carsappo-garage", storage: createJSONStorage(() => localStorage), skipHydration: true },
+    { name: "carsappo-garage", storage: hydrationSafeStorage((): boolean => useGarage.persist.hasHydrated()), skipHydration: true },
   ),
 );
 

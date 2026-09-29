@@ -15,10 +15,10 @@ export function ProfileForm({ name, phone, email }: { name: string; phone: strin
         <Input id="pf-email" value={email} disabled />
       </Field>
       <Field label="Name" error={state.errors?.name} htmlFor="pf-name">
-        <Input id="pf-name" name="name" defaultValue={name} required />
+        <Input id="pf-name" name="name" defaultValue={state.values?.name ?? name} required />
       </Field>
       <Field label="Mobile number" error={state.errors?.phone} htmlFor="pf-phone">
-        <Input id="pf-phone" name="phone" defaultValue={phone ?? ""} type="tel" />
+        <Input id="pf-phone" name="phone" defaultValue={state.values?.phone ?? phone ?? ""} type="tel" />
       </Field>
       <FormMessage state={state} />
       <SubmitButton variant="dark" pendingText="Saving…">
