@@ -59,14 +59,14 @@ test.describe("Admin — website editor (homepage, menus, pages)", () => {
     await save(page, "Save menu", /Navigation & footer updated/);
     const links = await footer.getByRole("textbox", { name: /^Label \d+$/ }).count();
     await footer.getByRole("button", { name: "Add link" }).click();
-    await footer.getByLabel(`Label ${links + 1}`, { exact: true }).fill("Track order");
-    await footer.getByLabel(`Link ${links + 1}`, { exact: true }).fill("/track-order");
+    await footer.getByLabel(`Label ${links + 1}`, { exact: true }).fill("Gift cards");
+    await footer.getByLabel(`Link ${links + 1}`, { exact: true }).fill("/shop?q=gift");
     await save(page, "Save footer", /Navigation & footer updated/);
 
     try {
       await page.goto("/about");
       await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Offers" })).toHaveAttribute("href", "/shop?offers=1");
-      await expect(page.getByRole("contentinfo").getByRole("link", { name: "Track order" })).toHaveAttribute("href", "/track-order");
+      await expect(page.getByRole("contentinfo").getByRole("link", { name: "Gift cards" })).toHaveAttribute("href", "/shop?q=gift");
     } finally {
       await page.goto("/admin/storefront/navigation");
       await menu.getByRole("button", { name: "Remove row" }).nth(items).click();
