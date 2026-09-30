@@ -5,7 +5,8 @@ import { CartDrawer } from "@/components/layout/cart-drawer";
 import { WhatsAppButton } from "@/components/layout/whatsapp-button";
 import { ClientInit } from "@/components/providers/client-init";
 import { JsonLd } from "@/components/ui/json-ld";
-import { getSettings } from "@/lib/settings";
+import { getSettings, serviceTypes, textRenderer } from "@/lib/settings";
+import { getFooterPages, getPolicyLinks } from "@/lib/pages";
 import { getCurrentUser } from "@/lib/auth";
 import { getNavCategories } from "@/lib/catalog";
 import { prisma } from "@/lib/db";
@@ -13,7 +14,15 @@ import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 
 /** Header, footer, cart drawer and site-wide JSON-LD around every storefront page (also used by the global 404). */
 export async function StoreShell({ children }: { children: React.ReactNode }) {
-  const [settings, categories, user] = await Promise.all([getSettings(), getNavCategories(), getCurrentUser()]);
+  const [settings, categories, user, policies, pages] = await Promise.all([
+    getSettings(),
+    getNavCategories(),
+    getCurrentUser(),
+    getPolicyLinks({ footerOnly: true }),
+    getFooterPages(),
+  ]);
+  const t = textRenderer(settings);
+  const nav = settings.navigation;
   const wishlist = user
     ? (await prisma.wishlistItem.findMany({ where: { userId: user.id }, select: { productId: true } })).map((w) => w.productId)
     : null;
@@ -29,15 +38,21 @@ export async function StoreShell({ children }: { children: React.ReactNode }) {
       <Header
         categories={categories}
         user={user ? { name: user.name, role: user.role } : null}
-        announcement={settings.store.announcement}
+        announcement={t(settings.store.announcement)}
         logoUrl={settings.store.logoUrl}
+        nav={{
+          items: nav.header.map((i) => ({ label: t(i.label), href: i.href })),
+          megaPromoTitle: t(nav.megaPromoTitle),
+          megaPromoText: t(nav.megaPromoText),
+          megaPromoLink: t(nav.megaPromoLink),
+        }}
       />
       <main id="main" className="flex-1">
         {children}
       </main>
-      <Footer settings={settings} categories={categories} />
+      <Footer settings={settings} categories={categories} text={t} services={serviceTypes(settings)} policies={policies} pages={pages} />
       <CartDrawer freeShippingThreshold={settings.shipping.freeShippingThreshold} />
-      <WhatsAppButton number={settings.store.whatsapp} />
+      <WhatsAppButton number={settings.store.whatsapp} greeting={`Hi ${settings.store.name}! I need help with`} />
       <ClientInit userId={user?.id ?? null} serverWishlist={wishlist} />
       <JsonLd
         data={organizationJsonLd({

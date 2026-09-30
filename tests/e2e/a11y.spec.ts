@@ -14,6 +14,7 @@ const PAGES = [
   "/blog/7d-vs-5d-car-mats",
   "/about",
   "/contact",
+  "/faq",
   "/track-order",
   "/login",
   "/register",

@@ -11,6 +11,7 @@ import { firstParam } from "@/lib/utils";
 import { OrderHistory, OrderProgress } from "@/components/order/timeline";
 import { OrderItems, OrderTotals, ShippingAddress } from "@/components/order/summary";
 import { ShipmentTracking } from "@/components/order/tracking";
+import { canCustomerCancel } from "@/lib/orders";
 import { CancelOrderButton, PayNowButton } from "@/components/order/actions";
 import { PurchaseTracker } from "@/components/order/purchase-tracker";
 import { ButtonLink } from "@/components/ui/button";
@@ -109,7 +110,7 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/or
             <h2 className="mb-4 font-semibold">History</h2>
             <OrderHistory events={order.events} />
           </section>
-          {(order.status === "PENDING" || order.status === "CONFIRMED") && (
+          {canCustomerCancel(order.status) && (
             <CancelOrderButton orderNumber={order.orderNumber} token={token ?? undefined} />
           )}
           {!user && (

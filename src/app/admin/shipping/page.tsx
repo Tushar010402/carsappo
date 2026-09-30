@@ -8,8 +8,10 @@ import { razorpayEnabled } from "@/lib/razorpay";
 import { shiprocketEnabled } from "@/lib/shiprocket";
 import { formatDateTime, paiseToRupees } from "@/lib/format";
 import { saveShippingSettings } from "@/app/admin/_actions/settings";
+import { saveDeliveryZones } from "@/app/admin/_actions/content";
 import { EmptyRow, PageHeader, Panel, TBody, THead, Table, Td, Th, Toggle, Tr } from "@/components/admin/ui";
 import { AdminForm, FormError, FormField, FormSubmit } from "@/components/admin/form";
+import { RowsEditor } from "@/components/admin/list-editor";
 import { MoneyInput } from "@/components/admin/ui";
 import { OrderStatusBadge } from "@/components/admin/status-badge";
 
@@ -42,7 +44,7 @@ function Integration({ name, configured, env, note }: { name: string; configured
 
 export default async function ShippingPage() {
   await requireAdmin();
-  const [{ shipping, store }, shipments] = await Promise.all([
+  const [{ shipping, store, delivery }, shipments] = await Promise.all([
     getSettings(),
     prisma.order.findMany({
       where: { awbCode: { not: null } },
@@ -54,7 +56,7 @@ export default async function ShippingPage() {
 
   return (
     <>
-      <PageHeader title="Shipping" description="Delivery charges, Cash on Delivery rules and courier integration." />
+      <PageHeader title="Shipping" description="Delivery charges, Cash on Delivery rules, delivery zones and courier integration." />
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
         <Panel title="Shipping rules" description="Amounts in rupees (GST inclusive).">
           <AdminForm action={saveShippingSettings} className="space-y-5">
@@ -112,6 +114,47 @@ export default async function ShippingPage() {
           </ul>
         </Panel>
       </div>
+
+      <Panel
+        title="Delivery zones"
+        description="Delivery estimates shown on product pages, the cart and the shipping policy. A pincode uses the zone with the longest matching prefix; everything else falls under the last row."
+        className="mt-6"
+        id="zones"
+      >
+        <AdminForm action={saveDeliveryZones} className="space-y-4">
+          <FormField name="zones" hint="Prefixes are the first 1–6 digits of a pincode, separated by commas (e.g. 110, 201). Days are counted after dispatch.">
+            <RowsEditor
+              name="zones"
+              defaultValue={delivery.zones.map((z) => ({ ...z, minDays: String(z.minDays), maxDays: String(z.maxDays) }))}
+              addLabel="Add zone"
+              max={20}
+              columns="sm:grid-cols-[minmax(0,1.3fr)_minmax(0,2.5fr)_5.5rem_5.5rem]"
+              fields={[
+                { key: "name", label: "Zone name" },
+                { key: "prefixes", label: "Pincode prefixes" },
+                { key: "minDays", label: "Min days", type: "number" },
+                { key: "maxDays", label: "Max days", type: "number" },
+              ]}
+            />
+          </FormField>
+          <div className="grid items-end gap-4 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,2.5fr)_5.5rem_5.5rem] sm:pr-[6.4rem]">
+            <FormField name="restName" label="Everywhere else">
+              <input id="restName" name="restName" className="field" defaultValue={delivery.restName} maxLength={60} required />
+            </FormField>
+            <Toggle name="skipSundays" label="Skip Sundays" description="Don't count Sundays in delivery dates." defaultChecked={delivery.skipSundays} className="pb-1" />
+            <FormField name="restMinDays" label="Min days">
+              <input id="restMinDays" name="restMinDays" type="number" min={0} max={60} className="field" defaultValue={delivery.restMinDays} required />
+            </FormField>
+            <FormField name="restMaxDays" label="Max days">
+              <input id="restMaxDays" name="restMaxDays" type="number" min={0} max={60} className="field" defaultValue={delivery.restMaxDays} required />
+            </FormField>
+          </div>
+          <FormError />
+          <div className="flex justify-end">
+            <FormSubmit>Save delivery zones</FormSubmit>
+          </div>
+        </AdminForm>
+      </Panel>
 
       <Panel title="Recent shipments" description="Orders with an AWB, most recently updated first." flush className="mt-6">
         <Table minWidth={760}>

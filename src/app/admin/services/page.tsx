@@ -1,22 +1,26 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import type { BookingStatus, Prisma, ServicePlan } from "@prisma/client";
+import type { BookingStatus, Prisma, ServicePlan, ServiceType } from "@prisma/client";
 import { Check, Eye, EyeOff, Pencil, Plus, Trash2 } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { getSettings, servicePincodes } from "@/lib/settings";
-import { BOOKING_STATUS_LABEL, SERVICE_TYPES, serviceLabel } from "@/lib/constants";
+import { getSettings, serviceName, servicePincodes, serviceTypes } from "@/lib/settings";
+import { SERVICE_TYPE_ORDER } from "@/lib/content";
+import { BOOKING_STATUS_LABEL } from "@/lib/constants";
 import { formatDate, formatDateTime, formatINR, paiseToRupees } from "@/lib/format";
 import { ADMIN_PAGE_SIZE, enumParam, pageParam, param, withParams } from "@/lib/admin/query";
 import { deletePlan, savePlan, setBookingStatus, setPlanActive } from "@/app/admin/_actions/services";
 import { saveServicesSettings } from "@/app/admin/_actions/settings";
+import { saveServicesContent } from "@/app/admin/_actions/content";
 import { EmptyRow, MoneyInput, PageHeader, Panel, TBody, THead, Table, Tabs, Td, Th, Toggle, Tr } from "@/components/admin/ui";
 import { FilterBar, FilterSelect, SearchInput } from "@/components/admin/filters";
 import { AdminPagination } from "@/components/admin/pagination";
 import { ActionButton } from "@/components/admin/action-button";
 import { FormDialog } from "@/components/admin/dialog";
-import { AdminForm, FormError, FormField, FormSubmit } from "@/components/admin/form";
-import { ListEditor } from "@/components/admin/list-editor";
+import { AdminForm, FormActions, FormError, FormField, FormSubmit } from "@/components/admin/form";
+import { ListEditor, RowsEditor } from "@/components/admin/list-editor";
+import { TextField } from "@/components/admin/fields";
+import { TokenHelp } from "@/components/admin/token-help";
 import { SlugFields } from "@/components/admin/slug-fields";
 import { ActiveBadge, BookingStatusBadge } from "@/components/admin/status-badge";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +29,9 @@ export const metadata: Metadata = { title: "Car cleaning services" };
 
 const STATUSES = Object.keys(BOOKING_STATUS_LABEL) as BookingStatus[];
 
-function PlanForm({ plan }: { plan?: ServicePlan }) {
+type ServiceOption = { value: string; label: string };
+
+function PlanForm({ plan, services }: { plan?: ServicePlan; services: ServiceOption[] }) {
   return (
     <AdminForm action={savePlan} className="space-y-4">
       {plan && <input type="hidden" name="id" value={plan.id} />}
@@ -33,7 +39,7 @@ function PlanForm({ plan }: { plan?: ServicePlan }) {
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField name="serviceType" label="Service">
           <select id="serviceType" name="serviceType" className="field" defaultValue={plan?.serviceType ?? "DAILY_EXTERIOR"}>
-            {SERVICE_TYPES.map((s) => (
+            {services.map((s) => (
               <option key={s.value} value={s.value}>
                 {s.label}
               </option>
@@ -80,7 +86,7 @@ function PlanForm({ plan }: { plan?: ServicePlan }) {
   );
 }
 
-async function BookingsTab({ sp }: { sp: Awaited<PageProps<"/admin/services">["searchParams"]> }) {
+async function BookingsTab({ sp, label }: { sp: Awaited<PageProps<"/admin/services">["searchParams"]>; label: (type: ServiceType) => string }) {
   const status = enumParam(sp, "status", STATUSES);
   const q = param(sp, "q");
   const page = pageParam(sp);
@@ -154,7 +160,7 @@ async function BookingsTab({ sp }: { sp: Awaited<PageProps<"/admin/services">["s
                 </span>
               </Td>
               <Td>
-                {serviceLabel(b.serviceType)}
+                {label(b.serviceType)}
                 {b.plan && <span className="block text-xs text-muted">{b.plan.name}</span>}
               </Td>
               <Td>
@@ -189,7 +195,7 @@ async function BookingsTab({ sp }: { sp: Awaited<PageProps<"/admin/services">["s
   );
 }
 
-async function PlansTab() {
+async function PlansTab({ services, label }: { services: ServiceOption[]; label: (type: ServiceType) => string }) {
   const plans = await prisma.servicePlan.findMany({ orderBy: [{ sortOrder: "asc" }, { price: "asc" }], include: { _count: { select: { bookings: true } } } });
   return (
     <Panel
@@ -198,7 +204,7 @@ async function PlansTab() {
       flush
       actions={
         <FormDialog trigger={<><Plus className="size-4" /> New plan</>} triggerVariant="primary" title="New service plan" size="lg">
-          <PlanForm />
+          <PlanForm services={services} />
         </FormDialog>
       }
     >
@@ -224,7 +230,7 @@ async function PlansTab() {
                 </span>
                 <span className="block max-w-72 truncate text-xs text-muted">{p.features.slice(0, 3).join(" · ")}</span>
               </Td>
-              <Td>{serviceLabel(p.serviceType)}</Td>
+              <Td>{label(p.serviceType)}</Td>
               <Td className="text-muted">{p.vehicleSize ?? "Any"}</Td>
               <Td align="right">
                 <span className="font-medium">{formatINR(p.price)}</span>
@@ -240,7 +246,7 @@ async function PlansTab() {
                     {p.isActive ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                   </ActionButton>
                   <FormDialog trigger={<Pencil className="size-4" />} triggerVariant="icon" triggerLabel={`Edit ${p.name}`} title={`Edit ${p.name}`} size="lg">
-                    <PlanForm plan={p} />
+                    <PlanForm plan={p} services={services} />
                   </FormDialog>
                   <ActionButton action={deletePlan.bind(null, p.id)} variant="icon-danger" label={`Delete ${p.name}`} confirm={`Delete plan "${p.name}"?`}>
                     <Trash2 className="size-4" />
@@ -276,30 +282,114 @@ async function AreaTab() {
   );
 }
 
+async function ContentTab() {
+  const settings = await getSettings();
+  const c = settings.services;
+  return (
+    <AdminForm action={saveServicesContent} className="space-y-6">
+      <TokenHelp />
+      <Panel title="Services" description="Names, descriptions and what's included — shown on the Services page, the homepage and the booking form. Hidden services can't be booked.">
+        <FormField name="types">
+          <div className="grid gap-4 lg:grid-cols-2">
+            {SERVICE_TYPE_ORDER.map((type) => {
+              const t = c.types[type];
+              const base = `types.${type}`;
+              return (
+                <fieldset key={type} className="space-y-4 rounded-2xl border border-line p-4">
+                  <legend className="px-1 font-mono text-[11px] text-muted">{type}</legend>
+                  <Toggle name={`${base}.visible`} label="Offer this service" description="Show it on the site and in the booking form." defaultChecked={t.visible} />
+                  <div className="grid gap-4 sm:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+                    <TextField name={`${base}.label`} label="Service name" defaultValue={t.label} max={60} required />
+                    <TextField name={`${base}.short`} label="Short name" defaultValue={t.short} max={30} required hint="Used on small cards." />
+                  </div>
+                  <TextField name={`${base}.description`} label="Description" defaultValue={t.description} max={300} multiline rows={2} />
+                  <FormField name={`${base}.included`} label="What's included">
+                    <ListEditor name={`${base}.included`} defaultValue={t.included} placeholder="e.g. All four tyres cleaned" addLabel="Add item" max={10} />
+                  </FormField>
+                </fieldset>
+              );
+            })}
+          </div>
+        </FormField>
+      </Panel>
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <Panel title="Booking form">
+          <div className="space-y-4">
+            <FormField name="timeSlots" label="Time slots" hint="Customers pick one when booking.">
+              <ListEditor name="timeSlots" defaultValue={c.timeSlots} placeholder="e.g. 6:00 AM – 8:00 AM" addLabel="Add time slot" max={12} />
+            </FormField>
+            <TextField name="bookingNote" label="Note under the Book button" defaultValue={c.bookingNote} max={160} />
+          </div>
+        </Panel>
+
+        <Panel title="How it works" description="Up to 6 numbered steps.">
+          <FormField name="steps">
+            <RowsEditor
+              name="steps"
+              defaultValue={c.steps}
+              addLabel="Add step"
+              max={6}
+              fields={[
+                { key: "title", label: "Step" },
+                { key: "text", label: "Text" },
+              ]}
+            />
+          </FormField>
+        </Panel>
+      </div>
+
+      <Panel title="Services page text">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <TextField name="heroTitle" label="Heading" defaultValue={c.heroTitle} max={80} required />
+          <TextField name="heroHighlight" label="Second line (yellow)" defaultValue={c.heroHighlight} max={60} />
+          <TextField name="heroText" label="Introduction" defaultValue={c.heroText} max={400} multiline rows={3} className="lg:col-span-2" />
+          <TextField name="servicesTitle" label="Services heading" defaultValue={c.servicesTitle} max={100} />
+          <TextField name="plansTitle" label="Plans heading" defaultValue={c.plansTitle} max={100} />
+          <TextField name="plansSubtitle" label="Plans text" defaultValue={c.plansSubtitle} max={160} />
+          <TextField name="faqTitle" label="FAQ heading" defaultValue={c.faqTitle} max={80} hint="Questions come from FAQs (Services group)." />
+          <TextField name="contactTitle" label="Contact box heading" defaultValue={c.contactTitle} max={80} />
+          <TextField name="contactText" label="Contact box text" defaultValue={c.contactText} max={200} />
+        </div>
+      </Panel>
+
+      <FormError />
+      <FormActions sticky>
+        <FormSubmit>Save service content</FormSubmit>
+      </FormActions>
+    </AdminForm>
+  );
+}
+
 export default async function ServicesPage({ searchParams }: PageProps<"/admin/services">) {
   await requireAdmin();
   const sp = await searchParams;
-  const tab = enumParam(sp, "tab", ["bookings", "plans", "area"] as const) ?? "bookings";
-  const [newCount, activeCount] = await Promise.all([
+  const tab = enumParam(sp, "tab", ["bookings", "plans", "content", "area"] as const) ?? "bookings";
+  const [newCount, activeCount, settings] = await Promise.all([
     prisma.serviceBooking.count({ where: { status: "NEW" } }),
     prisma.serviceBooking.count({ where: { status: "ACTIVE" } }),
+    getSettings(),
   ]);
+  const services = serviceTypes(settings, { includeHidden: true }).map((t) => ({ value: t.value, label: t.visible ? t.label : `${t.label} (hidden)` }));
+  const label = (type: ServiceType) => serviceName(settings, type);
 
   return (
     <>
       <PageHeader
         title="Car cleaning services"
-        description={`Daily car cleaning in Greater Noida · ${newCount} new booking${newCount === 1 ? "" : "s"} · ${activeCount} active subscription${activeCount === 1 ? "" : "s"}`}
+        description={`${newCount} new booking${newCount === 1 ? "" : "s"} · ${activeCount} active subscription${activeCount === 1 ? "" : "s"}`}
       />
       <Tabs
         items={[
           { href: "/admin/services", label: "Bookings", active: tab === "bookings", count: newCount || undefined },
           { href: "/admin/services?tab=plans", label: "Plans & pricing", active: tab === "plans" },
+          { href: "/admin/services?tab=content", label: "Service content", active: tab === "content" },
           { href: "/admin/services?tab=area", label: "Service area", active: tab === "area" },
         ]}
       />
-      {tab === "bookings" && <BookingsTab sp={sp} />}
-      {tab === "plans" && <PlansTab />}
+      {tab === "bookings" && <BookingsTab sp={sp} label={label} />}
+      {tab === "plans" && <PlansTab services={services} label={label} />}
+      {tab === "content" && <ContentTab />}
       {tab === "area" && <AreaTab />}
     </>
   );

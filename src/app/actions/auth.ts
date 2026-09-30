@@ -7,7 +7,7 @@ import { prisma } from "@/lib/db";
 import { createSession, destroySession, getCurrentUser, hashPassword, verifyPassword } from "@/lib/auth";
 import { rateLimit } from "@/lib/rate-limit";
 import { emailSchema, failure, fieldErrors, loginSchema, passwordSchema, registerSchema, type FormState } from "@/lib/validators";
-import { sendMail, simpleEmail } from "@/lib/mailer";
+import { BRAND, sendMail, simpleEmail } from "@/lib/mailer";
 import { absoluteUrl, safeRedirectPath } from "@/lib/utils";
 
 async function mergeGuestWishlist(userId: string, raw: FormDataEntryValue | null) {
@@ -94,8 +94,8 @@ export async function requestPasswordReset(_: FormState, formData: FormData): Pr
     const link = absoluteUrl(`/reset-password?token=${token}&email=${encodeURIComponent(user.email)}`);
     await sendMail({
       to: user.email,
-      subject: "Reset your Carsappo password",
-      html: simpleEmail("Reset your password", ["We received a request to reset your Carsappo password.", "This link expires in 1 hour. If you didn't ask for this, you can ignore this email."], {
+      subject: `Reset your ${BRAND} password`,
+      html: simpleEmail("Reset your password", [`We received a request to reset your ${BRAND} password.`, "This link expires in 1 hour. If you didn't ask for this, you can ignore this email."], {
         label: "Choose a new password",
         href: link,
       }),

@@ -7,8 +7,8 @@ import { safeRedirectPath, slugify, whatsappLink, youtubeId } from "../src/lib/u
 
 test("delivery zones", () => {
   assert.equal(zoneForPincode("201310").name, "Delhi NCR");
-  assert.equal(zoneForPincode("560034").name, "Metro");
-  assert.equal(zoneForPincode("781001").name, "Remote");
+  assert.equal(zoneForPincode("560034").name, "Metro cities");
+  assert.equal(zoneForPincode("781001").name, "North-East, J&K & islands");
   assert.equal(zoneForPincode("452001").name, "Rest of India");
   const est = estimateDelivery("201310", 1);
   assert.ok(new Date(est.latest) >= new Date(est.earliest));

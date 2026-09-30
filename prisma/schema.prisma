@@ -626,6 +626,30 @@ model Faq {
   isActive  Boolean  @default(true)
 }
 
+enum PageKind {
+  POLICY
+  PAGE
+}
+
+/// Admin-editable content pages. Policies live at /policies/[slug], other pages at /pages/[slug].
+/// A built-in policy slug without a row shows the default text from src/lib/policies.ts.
+model Page {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  kind            PageKind @default(PAGE)
+  title           String
+  body            String   @default("")
+  metaTitle       String?
+  metaDescription String?
+  isPublished     Boolean  @default(true)
+  showInFooter    Boolean  @default(true)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([kind, isPublished])
+}
+
 model ContactMessage {
   id        String   @id @default(cuid())
   name      String

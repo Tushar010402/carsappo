@@ -130,7 +130,16 @@ export function TagsInput({ name, defaultValue = [], placeholder = "Type and pre
   );
 }
 
-type RowField = { key: string; label: string; placeholder?: string; multiline?: boolean; width?: string };
+type RowField = {
+  key: string;
+  label: string;
+  placeholder?: string;
+  multiline?: boolean;
+  width?: string;
+  /** "select" renders a dropdown of `options`; "number" a numeric input. */
+  type?: "text" | "number" | "select";
+  options?: { value: string; label: string }[];
+};
 
 /** Repeating rows of several text fields (specifications, FAQs). Submits a JSON array of objects. */
 export function RowsEditor({
@@ -139,16 +148,20 @@ export function RowsEditor({
   defaultValue = [],
   addLabel = "Add row",
   max = 50,
+  columns = "sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]",
 }: {
   name: string;
   fields: RowField[];
   defaultValue?: Record<string, string>[];
   addLabel?: string;
   max?: number;
+  /** Tailwind grid-template classes for single-line rows. */
+  columns?: string;
 }) {
-  const empty = Object.fromEntries(fields.map((f) => [f.key, ""]));
+  const empty = Object.fromEntries(fields.map((f) => [f.key, f.type === "select" ? (f.options?.[0]?.value ?? "") : ""]));
   const { rows, add, update, remove, moveBy } = useRows<Record<string, string>>(defaultValue);
-  const values = rows.map((r) => r.value).filter((v) => fields.some((f) => (v[f.key] ?? "").trim()));
+  // A row counts once any typed field is filled (a dropdown always has a value).
+  const values = rows.map((r) => r.value).filter((v) => fields.some((f) => f.type !== "select" && String(v[f.key] ?? "").trim()));
   const stacked = fields.some((f) => f.multiline);
 
   return (
@@ -156,7 +169,7 @@ export function RowsEditor({
       <input type="hidden" name={name} value={JSON.stringify(values)} />
       {rows.map((row, i) => (
         <div key={row.key} className={cn("flex gap-1.5", stacked ? "items-start rounded-xl border border-line p-3" : "items-center")}>
-          <div className={cn("min-w-0 flex-1 gap-2", stacked ? "grid" : "grid sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]")}>
+          <div className={cn("min-w-0 flex-1 gap-2", stacked ? "grid" : cn("grid", columns))}>
             {fields.map((f) =>
               f.multiline ? (
                 <textarea
@@ -167,10 +180,26 @@ export function RowsEditor({
                   aria-label={`${f.label} ${i + 1}`}
                   onChange={(e) => update(row.key, { ...row.value, [f.key]: e.target.value })}
                 />
+              ) : f.type === "select" ? (
+                <select
+                  key={f.key}
+                  className="field py-2"
+                  value={row.value[f.key] ?? ""}
+                  aria-label={`${f.label} ${i + 1}`}
+                  onChange={(e) => update(row.key, { ...row.value, [f.key]: e.target.value })}
+                >
+                  {(f.options ?? []).map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
               ) : (
                 <input
                   key={f.key}
                   className="field py-2"
+                  type={f.type === "number" ? "number" : "text"}
+                  min={f.type === "number" ? 0 : undefined}
                   value={row.value[f.key] ?? ""}
                   placeholder={f.placeholder ?? f.label}
                   aria-label={`${f.label} ${i + 1}`}

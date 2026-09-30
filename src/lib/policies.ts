@@ -1,37 +1,23 @@
-import type { Settings } from "@/lib/settings";
-import { formatINR } from "@/lib/format";
-
 /**
- * Starter policy content. Review with your legal / CA advisor before launch —
- * these are sensible defaults for an Indian D2C store, not legal advice.
+ * Starter policy text, used until a policy is customised in Admin → Pages. Review with your legal / CA
+ * advisor before launch — these are sensible defaults for an Indian D2C store, not legal advice.
+ * {tokens} are filled from the store, shipping and delivery settings (see CONTENT_TOKENS in src/lib/content.ts).
  */
-export function policyContent(slug: string, s: Pick<Settings, "store" | "shipping">): { title: string; body: string } | null {
-  const name = s.store.legalName || s.store.name;
-  const email = s.store.email || "support@carsappo.com";
-  const ship = s.shipping;
-  const contactLine = `${email}${s.store.phone ? ` or ${s.store.phone}` : ""}`;
-
-  switch (slug) {
-    case "shipping-policy":
-      return {
-        title: "Shipping Policy",
-        body: `We ship across India through trusted courier partners.
+export const POLICY_DEFAULTS: Record<string, { title: string; body: string }> = {
+  "shipping-policy": {
+    title: "Shipping Policy",
+    body: `We ship across India through trusted courier partners.
 
 ## Dispatch
-Orders are dispatched within **${ship.dispatchDays === 1 ? "24 hours" : `${ship.dispatchDays} business days`}** (excluding Sundays and public holidays). Custom-fit products (7D mats, seat covers, body covers) may take 2–4 additional days to make for your exact vehicle.
+Orders are dispatched within **{dispatchTime}** (excluding Sundays and public holidays). Custom-fit products (7D mats, seat covers, body covers) may take 2–4 additional days to make for your exact vehicle.
 
 ## Delivery timelines
-| Region | Estimated delivery after dispatch |
-|---|---|
-| Delhi NCR | 1–3 days |
-| Metro cities | 3–5 days |
-| Rest of India | 4–7 days |
-| North-East, J&K, islands | 6–10 days |
+{deliveryTable}
 
 ## Shipping charges
-- **Free shipping** on orders above ${formatINR(ship.freeShippingThreshold)}.
-- A flat fee of ${formatINR(ship.flatShippingFee)} applies to smaller orders.
-${ship.codEnabled ? `- Cash on Delivery is available on most pincodes for an additional ${formatINR(ship.codFee)}.` : ""}
+- **Free shipping** on orders above {freeShipping}.
+- A flat fee of {shippingFee} applies to smaller orders.
+{codNote}
 
 ## Tracking
 Once your order ships you'll receive the courier name and tracking number by email, and you can track it anytime from **My Account → Track Orders** or the [Track Order](/track-order) page.
@@ -39,15 +25,14 @@ Once your order ships you'll receive the courier name and tracking number by ema
 ## Undelivered packages
 If a delivery fails because of an incorrect address or the recipient being unavailable, the courier will re-attempt. Packages returned to us after failed attempts will be refunded minus shipping charges.
 
-Questions? Contact us at ${contactLine}.`,
-      };
-    case "return-policy":
-      return {
-        title: "Return & Refund Policy",
-        body: `We want you to love every Carsappo purchase.
+Questions? Contact us at {contact}.`,
+  },
+  "return-policy": {
+    title: "Return & Refund Policy",
+    body: `We want you to love every {storeName} purchase.
 
 ## Eligibility
-You can request a return within **${ship.returnWindowDays} days of delivery** if:
+You can request a return within **{returnDays} days of delivery** if:
 - the product arrived **damaged or defective**,
 - you received the **wrong item**, or
 - a **custom-fit product doesn't fit** the vehicle (brand, model, year) selected at purchase.
@@ -69,12 +54,11 @@ Products must be unused and returned with original packaging, tags and accessori
 - Online payments are refunded to the original payment method. COD orders are refunded by bank transfer / UPI.
 - Shipping and COD charges are non-refundable unless the return is due to our error.
 
-Need help? Write to ${contactLine}.`,
-      };
-    case "cancellation-policy":
-      return {
-        title: "Cancellation Policy",
-        body: `## Cancelling an order
+Need help? Write to {contact}.`,
+  },
+  "cancellation-policy": {
+    title: "Cancellation Policy",
+    body: `## Cancelling an order
 You can cancel an order yourself from **My Account → My Orders** (or from the order link in your confirmation email) until it's packed.
 
 Once an order is packed or shipped it can't be cancelled, but you can refuse delivery or request a return as per our [Return Policy](/policies/return-policy).
@@ -82,16 +66,15 @@ Once an order is packed or shipped it can't be cancelled, but you can refuse del
 ## Refunds on cancellation
 Prepaid orders cancelled before dispatch are refunded in full to the original payment method within 5–7 business days.
 
-## Cancellations by ${name}
+## Cancellations by {legalName}
 We may cancel an order if a product is out of stock, the delivery pincode isn't serviceable, or we suspect fraudulent activity. You'll receive a full refund in such cases.
 
 ## Daily car cleaning subscriptions
 Monthly cleaning plans can be paused or cancelled with **3 days' notice** before the next billing date. One-time services can be rescheduled or cancelled free of charge up to 12 hours before the slot.`,
-      };
-    case "privacy-policy":
-      return {
-        title: "Privacy Policy",
-        body: `${name} ("we", "us") respects your privacy. This policy explains what we collect and how we use it, in line with the Digital Personal Data Protection Act, 2023.
+  },
+  "privacy-policy": {
+    title: "Privacy Policy",
+    body: `{legalName} ("we", "us") respects your privacy. This policy explains what we collect and how we use it, in line with the Digital Personal Data Protection Act, 2023.
 
 ## Information we collect
 - **Account & order details:** name, email, phone number, shipping and billing addresses, GSTIN (if provided).
@@ -109,18 +92,17 @@ Monthly cleaning plans can be paused or cancelled with **3 days' notice** before
 We share only what's necessary with service providers: payment gateway (Razorpay), courier partners (via Shiprocket), email providers and analytics/advertising platforms. We never sell your personal data.
 
 ## Your rights
-You can access, correct or request deletion of your data by writing to ${email}. Some data (such as invoices) must be retained to comply with tax laws.
+You can access, correct or request deletion of your data by writing to {email}. Some data (such as invoices) must be retained to comply with tax laws.
 
 ## Cookies
 We use essential cookies to keep you signed in and remember your cart, and analytics/advertising cookies to understand and improve our marketing.
 
 ## Contact
-Grievance officer: ${name}, ${s.store.address}. Email: ${email}.`,
-      };
-    case "terms-and-conditions":
-      return {
-        title: "Terms & Conditions",
-        body: `carsappo.com is operated by ${name}${s.store.address ? `, ${s.store.address}` : ""}${s.store.gstin ? ` (GSTIN ${s.store.gstin})` : ""}. By using the website you agree to these terms.
+Grievance officer: {grievanceOfficer}. Email: {email}.`,
+  },
+  "terms-and-conditions": {
+    title: "Terms & Conditions",
+    body: `{website} is operated by {registeredEntity}. By using the website you agree to these terms.
 
 ## Products & pricing
 - All prices are in Indian Rupees and **inclusive of GST**.
@@ -137,7 +119,7 @@ An order is confirmed when you receive an order confirmation. We reserve the rig
 Online payments are processed by Razorpay. Cash on Delivery may be limited by order value and pincode.
 
 ## Services
-Daily car cleaning is available only in serviceable areas of Greater Noida. Service schedules may change due to weather or unforeseen circumstances; missed days are compensated.
+Daily car cleaning is available only in our service area: {serviceArea} Service schedules may change due to weather or unforeseen circumstances; missed days are compensated.
 
 ## Liability
 Our liability for any claim is limited to the value of the product or service purchased.
@@ -146,11 +128,11 @@ Our liability for any claim is limited to the value of the product or service pu
 These terms are governed by the laws of India. Courts at Gautam Buddh Nagar, Uttar Pradesh shall have exclusive jurisdiction.
 
 ## Grievance officer
-${name}${s.store.address ? `, ${s.store.address}` : ""}. Email: ${email}. We acknowledge complaints within 48 hours and resolve them within one month.
+{grievanceOfficer}. Email: {email}. We acknowledge complaints within 48 hours and resolve them within one month.
 
-Contact: ${contactLine}.`,
-      };
-    default:
-      return null;
-  }
-}
+Contact: {contact}.`,
+  },
+};
+
+/** Built-in policies, in footer order. */
+export const BUILT_IN_POLICY_SLUGS = ["shipping-policy", "return-policy", "privacy-policy", "terms-and-conditions", "cancellation-policy"];

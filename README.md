@@ -30,7 +30,7 @@ look (black / white / Carsappo yellow, Poppins + Inter), mobile-first, SEO-ready
 | Customer dashboard: orders, wishlist, addresses, coupons, returns, notifications, invoices, track orders | `/account/*` |
 | Services page: daily cleaning, interior cleaning, pricing plans, FAQs, book service, contact form | `/services` |
 | Blog: car care tips, buying guides, comparisons, maintenance, SEO articles | `/blog`, `/blog/category/[slug]`, `/blog/[slug]` |
-| Admin: products, categories, orders, customers, inventory, coupons, reviews, blogs, banners, shipping, GST invoices, analytics, SEO settings | `/admin/*` |
+| Admin: products, categories, orders, customers, inventory, coupons, reviews, blogs, banners, shipping, GST invoices, analytics, SEO settings | `/admin/*` — see [Managing the website](#managing-the-website-admin) |
 | Payments: Razorpay — UPI, debit/credit cards, net banking | Razorpay Checkout + server-side signature verification + webhook |
 | Shipping: Shiprocket — tracking, labels, delivery status | Admin order actions + `/api/webhooks/shipping` |
 | SEO: friendly URLs, meta titles/descriptions, image optimisation, schema, sitemap, fast loading | `next/image`, JSON-LD (Organization, WebSite, Product, Breadcrumb, FAQ, Article, LocalBusiness), `/sitemap.xml`, `/robots.txt` |
@@ -39,6 +39,33 @@ look (black / white / Carsappo yellow, Poppins + Inter), mobile-first, SEO-ready
 Also included: GST tax invoices (CGST/SGST vs IGST by place of supply, HSN/SAC, amount in words,
 financial-year numbering), COD with fee and limits, order cancellation with automatic Razorpay refund,
 return requests, email notifications, WhatsApp floating button, policy pages, guest order tracking.
+
+## Managing the website (admin)
+
+Everything a customer sees can be changed from `/admin` without touching code. Text fields accept
+placeholders such as `{storeName}`, `{freeShipping}`, `{returnDays}`, `{dispatchTime}` or `{contact}`
+(the full list is under "Placeholders" on each editor), so changing a setting once updates every page,
+policy and email that mentions it.
+
+| What | Where in the admin |
+|---|---|
+| Homepage: section order and visibility, hero text and buttons, every section heading, "Why us" cards, daily-cleaning block, how many products each slider shows | Website → Homepage |
+| Hero / promo image banners (scheduled) | Website → Banners |
+| Header menu, Shop mega-menu promo, footer text, newsletter text, quick links, payment badges | Website → Menus & footer |
+| About and Contact pages | Website → Pages & policies |
+| Shipping, Return, Privacy, Terms and Cancellation policies (start from ready-made text, reset any time), extra policies | Website → Pages & policies |
+| Your own pages (e.g. Warranty, Bulk orders) at `/pages/…`, optionally in the footer | Website → Pages & policies → New page |
+| FAQs (FAQ page, services page), testimonials, blog | Website → FAQs / Testimonials / Blog |
+| Products, prices, MRP, GST, stock, images, compatibility, SEO | Catalog → Products |
+| Bulk price / MRP / stock / GST update from Excel or Google Sheets (CSV, with a preview before saving) | Catalog → Inventory → Bulk update |
+| Categories, brands, vehicles, coupons, reviews | Catalog |
+| Car-cleaning services: names, descriptions, what's included, which services are offered, time slots, page text, "How it works" steps | Car cleaning → Service content |
+| Car-cleaning plans and prices, service-area pincodes | Car cleaning → Plans & pricing / Service area |
+| Free-shipping threshold, shipping fee, COD fee and limit, dispatch time, return window | Configuration → Shipping |
+| Delivery zones and delivery-time estimates by pincode | Configuration → Shipping → Delivery zones |
+| Store name, contact details, address, GSTIN, social links, announcement bar, your password | Configuration → Settings |
+| GA4, GTM, Meta Pixel, Google Ads, meta tags | Configuration → SEO & Tracking |
+| Admin users (add a colleague, remove access) | Configuration → Team |
 
 ## Tech stack
 
@@ -84,16 +111,18 @@ Without Razorpay keys, checkout offers Cash on Delivery only. Without SMTP, emai
 ## Testing
 
 `npm test` runs the unit tests (GST split, pricing, validators, redirects). `npm run test:e2e` runs
-**~120 Playwright tests** against a production build, on desktop (1440px) and a phone (Pixel 7):
+**~135 Playwright tests** against a production build, on desktop (1440px) and a phone (Pixel 7):
 
 - **Storefront** — every homepage section, smart search, shop-by-vehicle, all shop filters/sorts, product
   page (gallery, zoom, video, specs, compatibility, FAQs, FBT, pincode check, fit check, reviews, WhatsApp),
   cart maths (GST, shipping threshold, coupons, COD fee), guest + signed-in checkout, Razorpay payment /
   retry / webhook, COD, GST invoices, emails, customer dashboard, returns, password reset, order tracking.
 - **Services & content** — booking (pincode-gated to Greater Noida), plans, FAQs, contact, blog, policies, 404s.
-- **Admin** — products (with image upload), inventory + CSV, orders → Shiprocket shipment / AWB / pickup /
-  label / tracking, status emails, COD collection, partial + full Razorpay refunds, returns + restock,
-  coupons, reviews, banners, testimonials, blog, settings, SEO & tracking tags, access control.
+- **Admin** — products (with image upload), inventory + CSV export and bulk CSV update, orders → Shiprocket
+  shipment / AWB / pickup / label / tracking, status emails, COD collection, partial + full Razorpay refunds,
+  returns + restock, coupons, reviews, banners, testimonials, blog, settings, SEO & tracking tags, homepage
+  sections and text, menus and footer, policies and custom pages, About/Contact, service content, delivery
+  zones, team members, access control.
 - **Quality gates** — no horizontal scrolling at 360 / 390 / 768 / 1024 / 1280 / 1920px, axe WCAG 2.1 AA
   (no serious/critical issues), unique titles/descriptions/canonicals, JSON-LD, sitemap/robots, security
   headers, open-redirect and XSS checks, server-side price integrity, webhook signatures.

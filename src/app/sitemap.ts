@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db";
-import { POLICY_PAGES } from "@/lib/constants";
+import { getPolicyLinks } from "@/lib/pages";
 import { absoluteUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -16,16 +16,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: absoluteUrl("/blog"), lastModified: now, changeFrequency: "weekly", priority: 0.7 },
     { url: absoluteUrl("/about"), changeFrequency: "monthly", priority: 0.5 },
     { url: absoluteUrl("/contact"), changeFrequency: "monthly", priority: 0.5 },
+    { url: absoluteUrl("/faq"), changeFrequency: "monthly", priority: 0.5 },
     { url: absoluteUrl("/track-order"), changeFrequency: "yearly", priority: 0.3 },
-    ...POLICY_PAGES.map((p) => ({ url: absoluteUrl(`/policies/${p.slug}`), changeFrequency: "yearly" as const, priority: 0.2 })),
+    ...(await getPolicyLinks()).map((p) => ({ url: absoluteUrl(p.href), changeFrequency: "yearly" as const, priority: 0.2 })),
   ];
 
   try {
-    const [products, categories, posts, blogCategories] = await Promise.all([
+    const [products, categories, posts, blogCategories, pages] = await Promise.all([
       prisma.product.findMany({ where: { isActive: true }, select: { slug: true, updatedAt: true, images: { select: { url: true }, take: 1, orderBy: { sortOrder: "asc" } } } }),
       prisma.category.findMany({ where: { isActive: true }, select: { slug: true, updatedAt: true } }),
       prisma.post.findMany({ where: { isPublished: true, publishedAt: { lte: now } }, select: { slug: true, updatedAt: true } }),
       prisma.blogCategory.findMany({ select: { slug: true } }),
+      prisma.page.findMany({ where: { kind: "PAGE", isPublished: true }, select: { slug: true, updatedAt: true } }),
     ]);
     return [
       ...staticPages,
@@ -39,6 +41,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       })),
       ...blogCategories.map((c) => ({ url: absoluteUrl(`/blog/category/${c.slug}`), changeFrequency: "weekly" as const, priority: 0.4 })),
       ...posts.map((p) => ({ url: absoluteUrl(`/blog/${p.slug}`), lastModified: p.updatedAt, changeFrequency: "monthly" as const, priority: 0.6 })),
+      ...pages.map((p) => ({ url: absoluteUrl(`/pages/${p.slug}`), lastModified: p.updatedAt, changeFrequency: "monthly" as const, priority: 0.4 })),
     ];
   } catch {
     return staticPages;

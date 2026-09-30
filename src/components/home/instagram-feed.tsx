@@ -4,19 +4,31 @@ import { SmartImage } from "@/components/ui/smart-image";
 import { buttonClasses } from "@/components/ui/button";
 import type { InstagramPost } from "@/lib/social";
 
-export function InstagramFeed({ posts, profileUrl, fallbackImages }: { posts: InstagramPost[]; profileUrl: string; fallbackImages: string[] }) {
+export function InstagramFeed({
+  posts,
+  profileUrl,
+  fallbackImages,
+  title,
+  subtitle,
+}: {
+  posts: InstagramPost[];
+  profileUrl: string;
+  fallbackImages: string[];
+  title: string;
+  subtitle: string;
+}) {
   const handle = profileUrl.replace(/\/$/, "").split("/").pop() || "carsappo";
   const tiles = posts.length
     ? posts.slice(0, 8).map((p) => ({ key: p.id, href: p.permalink, img: p.imageUrl, alt: p.caption.slice(0, 80) || "Instagram post", video: p.mediaType === "VIDEO" }))
-    : fallbackImages.slice(0, 8).map((img, i) => ({ key: String(i), href: profileUrl, img, alt: "Carsappo on Instagram", video: i % 3 === 1 }));
+    : fallbackImages.slice(0, 8).map((img, i) => ({ key: String(i), href: profileUrl, img, alt: `${title} on Instagram`, video: i % 3 === 1 }));
 
   return (
     <div>
       <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <p className="eyebrow mb-3">@{handle}</p>
-          <h2 className="text-3xl font-semibold sm:text-4xl">Follow the Carsappo garage</h2>
-          <p className="mt-3 text-muted">Latest posts, reels, installs and car care hacks.</p>
+          <h2 className="text-3xl font-semibold sm:text-4xl">{title}</h2>
+          {subtitle && <p className="mt-3 text-muted">{subtitle}</p>}
         </div>
         <a href={profileUrl} target="_blank" rel="noopener noreferrer" className={buttonClasses("dark")}>
           <InstagramIcon className="size-4" /> Follow on Instagram

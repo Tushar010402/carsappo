@@ -1,11 +1,11 @@
 import { WhatsappIcon } from "@/components/icons/brand";
 import { whatsappLink } from "@/lib/utils";
 
-export function WhatsAppButton({ number }: { number: string }) {
+export function WhatsAppButton({ number, greeting }: { number: string; greeting: string }) {
   if (!number) return null;
   return (
     <a
-      href={whatsappLink(number, "Hi Carsappo! I need help with")}
+      href={whatsappLink(number, greeting)}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with us on WhatsApp"

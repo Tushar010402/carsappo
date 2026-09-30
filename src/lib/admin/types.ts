@@ -5,6 +5,8 @@ export type ActionState = {
   errors?: Record<string, string>;
   /** Client navigates here after a successful action (e.g. to the edit page of a new record). */
   redirectTo?: string;
+  /** Extra lines shown under the form (e.g. an import report). */
+  details?: { title: string; lines: string[]; tone?: "info" | "warning" | "danger" }[];
 };
 
 /** Server action used with `<AdminForm>` (useActionState signature). */

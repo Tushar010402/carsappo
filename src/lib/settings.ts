@@ -1,6 +1,19 @@
 import "server-only";
 import { unstable_cache, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db";
+import type { ServiceType } from "@prisma/client";
+import {
+  ABOUT_DEFAULTS,
+  CONTACT_DEFAULTS,
+  DELIVERY_DEFAULTS,
+  HOME_DEFAULTS,
+  HOME_SECTIONS,
+  NAVIGATION_DEFAULTS,
+  SERVICE_TYPE_ORDER,
+  SERVICES_CONTENT_DEFAULTS,
+  contentTokens,
+  fillTokens,
+} from "@/lib/content";
 
 /**
  * Admin-editable settings, stored as one JSON document per group in the `Setting` table.
@@ -59,15 +72,40 @@ export const SETTINGS_DEFAULTS = {
   services: {
     serviceablePincodes: "201306,201308,201310,201312,201315,201318,203207,201009",
     serviceAreaNote: "Currently available only in Greater Noida (incl. Greater Noida West).",
+    ...SERVICES_CONTENT_DEFAULTS,
   },
-} as const;
+  // Storefront content (Admin → Storefront / Pages); see src/lib/content.ts.
+  home: HOME_DEFAULTS,
+  navigation: NAVIGATION_DEFAULTS,
+  about: ABOUT_DEFAULTS,
+  contact: CONTACT_DEFAULTS,
+  delivery: DELIVERY_DEFAULTS,
+};
 
-type Widen<T> = T extends string ? string : T extends number ? number : T extends boolean ? boolean : { -readonly [K in keyof T]: Widen<T[K]> };
+type Widen<T> = T extends string
+  ? string
+  : T extends number
+    ? number
+    : T extends boolean
+      ? boolean
+      : T extends readonly (infer U)[]
+        ? Widen<U>[]
+        : { -readonly [K in keyof T]: Widen<T[K]> };
 
 export type Settings = Widen<typeof SETTINGS_DEFAULTS>;
 export type SettingsGroup = keyof Settings;
 
 const defaults = () => structuredClone(SETTINGS_DEFAULTS) as unknown as Settings;
+
+const isPlainObject = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
+
+/** Saved values over defaults, recursively for nested objects (arrays are replaced whole), so new default keys still apply. */
+function deepMerge<T>(base: T, saved: unknown): T {
+  if (!isPlainObject(base) || !isPlainObject(saved)) return (saved === undefined ? base : saved) as T;
+  const out: Record<string, unknown> = { ...base };
+  for (const [key, value] of Object.entries(saved)) out[key] = key in base ? deepMerge((base as Record<string, unknown>)[key], value) : value;
+  return out as T;
+}
 
 /** Defaults overlaid with the saved rows. Throws if the database is unreachable. */
 async function loadSettings(): Promise<Settings> {
@@ -76,9 +114,8 @@ async function loadSettings(): Promise<Settings> {
   for (const row of rows) {
     if (!(row.key in result)) continue;
     try {
-      const parsed = JSON.parse(row.value);
       const group = row.key as SettingsGroup;
-      Object.assign(result[group], parsed);
+      (result as Record<string, unknown>)[group] = deepMerge(result[group], JSON.parse(row.value));
     } catch {
       // ignore corrupt rows; defaults apply
     }
@@ -86,7 +123,7 @@ async function loadSettings(): Promise<Settings> {
   return result;
 }
 
-const cachedSettings = unstable_cache(loadSettings, ["settings-v1"], { tags: ["settings"], revalidate: 300 });
+const cachedSettings = unstable_cache(loadSettings, ["settings-v2"], { tags: ["settings"], revalidate: 300 });
 
 export async function getSettings(): Promise<Settings> {
   try {
@@ -101,7 +138,7 @@ export async function getSettings(): Promise<Settings> {
 
 export async function saveSettingsGroup<G extends SettingsGroup>(group: G, value: Partial<Settings[G]>) {
   const current = (await loadSettings())[group];
-  const merged = { ...current, ...value };
+  const merged = deepMerge(current, value);
   await prisma.setting.upsert({
     where: { key: group },
     create: { key: group, value: JSON.stringify(merged) },
@@ -115,4 +152,32 @@ export function servicePincodes(settings: Settings) {
     .split(/[\s,]+/)
     .map((p) => p.trim())
     .filter(Boolean);
+}
+
+/** Fills {tokens} (store name, shipping numbers, delivery table…) in admin-written copy. */
+export function renderText(settings: Settings, text: string) {
+  return fillTokens(text, contentTokens(settings));
+}
+
+/** A `renderText` bound to one settings snapshot, for pages that fill many strings. */
+export function textRenderer(settings: Settings) {
+  const tokens = contentTokens(settings);
+  return (text: string) => fillTokens(text, tokens);
+}
+
+/** Car cleaning services as named in Admin → Services, in display order (hidden ones left out unless asked). */
+export function serviceTypes(settings: Settings, { includeHidden = false } = {}) {
+  return SERVICE_TYPE_ORDER.map((value) => ({ value, ...settings.services.types[value] })).filter((t) => includeHidden || t.visible);
+}
+
+export function serviceName(settings: Settings, value: ServiceType) {
+  return settings.services.types[value]?.label || value;
+}
+
+/** Homepage sections in the saved order; sections added in later releases are appended, visible. */
+export function homeSections(settings: Settings) {
+  const known = new Set<string>(HOME_SECTIONS.map((s) => s.id));
+  const saved = settings.home.sections.filter((s) => known.has(s.id));
+  const missing = HOME_SECTIONS.filter((s) => !saved.some((x) => x.id === s.id)).map((s) => ({ id: s.id as string, visible: true }));
+  return [...saved, ...missing];
 }

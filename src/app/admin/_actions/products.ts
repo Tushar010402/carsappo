@@ -5,7 +5,7 @@ import type { Prisma } from "@prisma/client";
 import { assertAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { discountPercent } from "@/lib/format";
-import { FUEL_TYPES } from "@/lib/constants";
+import { FUEL_TYPES, GST_RATES } from "@/lib/constants";
 import {
   checkbox,
   formObject,
@@ -23,7 +23,6 @@ import {
 import { dbError, done, failed, invalid, revalidateAdmin, revalidateStore } from "@/lib/admin/server";
 import type { ActionState } from "@/lib/admin/types";
 
-const GST_RATES = [0, 5, 12, 18, 28] as const;
 const FUELS = FUEL_TYPES.map((f) => f.value) as [string, ...string[]];
 
 const imageSchema = z.object({

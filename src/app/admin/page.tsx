@@ -4,7 +4,7 @@ import { AlertTriangle, ArrowRight, CalendarCheck, IndianRupee, Inbox, PackageCh
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { formatDate, formatDateTime, formatINR } from "@/lib/format";
-import { serviceLabel } from "@/lib/constants";
+import { getSettings, serviceName } from "@/lib/settings";
 import { lowStockCount, lowStockProducts, toShipWhere } from "@/lib/admin/metrics";
 import { periodFor, revenueByDay, revenueSummary } from "@/lib/admin/analytics";
 import { EmptyRow, Money, Panel, StatCard, TBody, THead, Table, Td, Th, Thumb, Tr } from "@/components/admin/ui";
@@ -29,7 +29,7 @@ export default async function AdminDashboard() {
   const month = periodFor(30);
   const fortnight = periodFor(14);
 
-  const [todayStats, monthStats, trend, toShip, pendingPayment, lowCount, lowIds, newBookings, unread, pendingReviews, recentOrders, bookings] = await Promise.all([
+  const [todayStats, monthStats, trend, toShip, pendingPayment, lowCount, lowIds, newBookings, unread, pendingReviews, recentOrders, bookings, settings] = await Promise.all([
     revenueSummary(today.start, today.end),
     revenueSummary(month.start, month.end),
     revenueByDay(fortnight.start, fortnight.end),
@@ -46,6 +46,7 @@ export default async function AdminDashboard() {
       select: { id: true, orderNumber: true, createdAt: true, shipName: true, shipCity: true, total: true, status: true, paymentStatus: true, paymentMethod: true },
     }),
     prisma.serviceBooking.findMany({ orderBy: { createdAt: "desc" }, take: 5, include: { plan: { select: { name: true } } } }),
+    getSettings(),
   ]);
 
   const lowStock = lowIds.length
@@ -202,7 +203,7 @@ export default async function AdminDashboard() {
                           {b.name} · {b.carModel}
                         </span>
                         <span className="block truncate text-xs text-muted">
-                          {b.plan?.name ?? serviceLabel(b.serviceType)} · from {formatDate(b.preferredDate)}
+                          {b.plan?.name ?? serviceName(settings, b.serviceType)} · from {formatDate(b.preferredDate)}
                         </span>
                       </span>
                       <BookingStatusBadge status={b.status} />

@@ -6,11 +6,10 @@ import { getCurrentUser } from "@/lib/auth";
 import { rateLimit } from "@/lib/rate-limit";
 import { bookingSchema, contactSchema, emailSchema, failure, fieldErrors, reviewSchema, type FormState } from "@/lib/validators";
 import { adminEmail, sendMail, simpleEmail } from "@/lib/mailer";
-import { getSettings, servicePincodes } from "@/lib/settings";
+import { getSettings, renderText, serviceName, servicePincodes, serviceTypes } from "@/lib/settings";
 import { generateBookingNumber } from "@/lib/orders";
 import { refreshProductRating } from "@/lib/reviews";
 import { formatDate } from "@/lib/format";
-import { serviceLabel } from "@/lib/constants";
 
 export async function subscribeNewsletter(_: FormState, formData: FormData): Promise<FormState> {
   if (!(await rateLimit("newsletter", 5, 10 * 60 * 1000)).ok) return { message: "Please try again in a few minutes." };
@@ -34,7 +33,8 @@ export async function submitContact(_: FormState, formData: FormData): Promise<F
       html: simpleEmail(`Message from ${msg.name}`, [`${msg.email}${msg.phone ? ` · ${msg.phone}` : ""}`, msg.message]),
     });
   }
-  return { ok: true, message: "Thanks for reaching out! Our team will get back to you within 24 hours." };
+  const settings = await getSettings();
+  return { ok: true, message: renderText(settings, settings.contact.successMessage) };
 }
 
 export type BookingState = FormState & { bookingNumber?: string };
@@ -46,10 +46,17 @@ export async function createBooking(_: BookingState, formData: FormData): Promis
   const data = parsed.data;
 
   const settings = await getSettings();
+  if (!serviceTypes(settings).some((t) => t.value === data.serviceType)) {
+    return failure(formData, { errors: { serviceType: "This service isn't available right now. Please choose another." } });
+  }
+  const slots = settings.services.timeSlots;
+  if (slots.length > 0 && !slots.includes(data.preferredSlot)) {
+    return failure(formData, { errors: { preferredSlot: "Choose one of the available time slots" } });
+  }
   if (!servicePincodes(settings).includes(data.pincode)) {
     return failure(formData, {
       errors: {
-        pincode: "Sorry — daily car cleaning is currently available only in Greater Noida. Leave us a message and we'll notify you when we reach your area.",
+        pincode: `Sorry — we don't clean cars at this pincode yet. ${settings.services.serviceAreaNote} Leave us a message and we'll let you know when we reach your area.`,
       },
     });
   }
@@ -83,14 +90,14 @@ export async function createBooking(_: BookingState, formData: FormData): Promis
   });
 
   const summary = [
-    `${serviceLabel(booking.serviceType)} · starts ${formatDate(booking.preferredDate)}, ${booking.preferredSlot}`,
+    `${serviceName(settings, booking.serviceType)} · starts ${formatDate(booking.preferredDate)}, ${booking.preferredSlot}`,
     `${booking.carModel}${booking.carNumber ? ` (${booking.carNumber})` : ""}`,
     `${booking.address}, ${booking.pincode}`,
   ];
   if (booking.email) {
     await sendMail({
       to: booking.email,
-      subject: `Booking ${booking.bookingNumber} received — Carsappo Daily Car Cleaning`,
+      subject: `Booking ${booking.bookingNumber} received — ${settings.store.name}`,
       html: simpleEmail("We've received your booking", [...summary, "Our team will call you shortly to confirm your slot."]),
     });
   }

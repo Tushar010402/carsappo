@@ -153,10 +153,5 @@ export const PAGE_SIZE = 24;
 /** Popular search terms shown under the smart search (from the brief). */
 export const POPULAR_SEARCHES = ["Mats", "Seat Covers", "Tyre Polish", "Dashboard Polish", "Microfiber", "Vacuum Cleaner", "Perfume"];
 
-export const POLICY_PAGES = [
-  { slug: "shipping-policy", title: "Shipping Policy" },
-  { slug: "return-policy", title: "Return & Refund Policy" },
-  { slug: "privacy-policy", title: "Privacy Policy" },
-  { slug: "terms-and-conditions", title: "Terms & Conditions" },
-  { slug: "cancellation-policy", title: "Cancellation Policy" },
-] as const;
+/** GST slabs a product can carry (percent). */
+export const GST_RATES = [0, 5, 12, 18, 28] as const;

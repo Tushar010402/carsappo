@@ -13,6 +13,7 @@ export const productCardSelect = {
   mrp: true,
   discountPercent: true,
   stock: true,
+  lowStockAlert: true,
   ratingAvg: true,
   ratingCount: true,
   isBestSeller: true,

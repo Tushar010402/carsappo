@@ -4,7 +4,7 @@ import type { OrderStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { financialYear } from "@/lib/gst";
 import { ORDER_STATUS_LABEL } from "@/lib/constants";
-import { adminEmail, orderConfirmationEmail, sendMail, simpleEmail, statusUpdateEmail } from "@/lib/mailer";
+import { BRAND, adminEmail, orderConfirmationEmail, sendMail, simpleEmail, statusUpdateEmail } from "@/lib/mailer";
 import { formatINR } from "@/lib/format";
 import { absoluteUrl } from "@/lib/utils";
 
@@ -110,7 +110,7 @@ export async function confirmOrder(orderId: string, opts: { razorpayPaymentId?: 
         },
       });
     }
-    defer(() => sendMail({ to: o.email, subject: `Order ${o.orderNumber} confirmed — Carsappo`, html: orderConfirmationEmail(o) }));
+    defer(() => sendMail({ to: o.email, subject: `Order ${o.orderNumber} confirmed — ${BRAND}`, html: orderConfirmationEmail(o) }));
     const admin = adminEmail();
     if (admin) {
       defer(() =>
@@ -171,14 +171,15 @@ export async function setOrderStatus(orderId: string, status: OrderStatus, note?
           data: { userId: order.userId, title: msg.title, body: msg.body, link: `/account/orders/${order.orderNumber}` },
         });
       }
-      defer(() => sendMail({ to: order.email, subject: `${msg.title} — Carsappo`, html: statusUpdateEmail(order, msg.title, msg.body) }));
+      defer(() => sendMail({ to: order.email, subject: `${msg.title} — ${BRAND}`, html: statusUpdateEmail(order, msg.title, msg.body) }));
     }
   }
   return order;
 }
 
+/** Customers can cancel until the order is being packed; after that they contact support. */
 export function canCustomerCancel(status: OrderStatus) {
-  return status === "PENDING" || status === "CONFIRMED" || status === "PROCESSING";
+  return status === "PENDING" || status === "CONFIRMED";
 }
 
 export const orderWithDetails = {

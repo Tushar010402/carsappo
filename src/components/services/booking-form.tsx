@@ -8,7 +8,6 @@ import { Field, FormMessage, Input, Select, Textarea } from "@/components/ui/fie
 import { SubmitButton } from "@/components/ui/submit-button";
 import { ButtonLink } from "@/components/ui/button";
 import { WhatsappIcon } from "@/components/icons/brand";
-import { SERVICE_SLOTS, SERVICE_TYPES } from "@/lib/constants";
 import { formatINR } from "@/lib/format";
 import { todayInIndia, whatsappLink } from "@/lib/utils";
 
@@ -19,16 +18,27 @@ export function BookingForm({
   defaultType,
   defaultPlan,
   whatsapp,
+  storeName,
   pincodes,
+  services,
+  slots,
+  note,
+  areaNote,
 }: {
+  /** Visible services and time slots from Admin → Services. */
+  services: { value: string; label: string }[];
+  slots: string[];
+  note: string;
+  areaNote: string;
   plans: Plan[];
   defaultType?: string;
   defaultPlan?: string;
   whatsapp: string;
+  storeName: string;
   pincodes: string[];
 }) {
   const [state, action] = useActionState<BookingState, FormData>(createBooking, {});
-  const [type, setType] = useState(defaultType && SERVICE_TYPES.some((s) => s.value === defaultType) ? defaultType : "DAILY_EXTERIOR");
+  const [type, setType] = useState(defaultType && services.some((s) => s.value === defaultType) ? defaultType : (services[0]?.value ?? ""));
   const [pin, setPin] = useState("");
   const typePlans = useMemo(() => plans.filter((p) => p.serviceType === type), [plans, type]);
   const [today] = useState(todayInIndia);
@@ -51,7 +61,7 @@ export function BookingForm({
         <div className="mt-6 flex flex-wrap gap-3">
           {whatsapp && (
             <a
-              href={whatsappLink(whatsapp, `Hi Carsappo! I just booked a service. Booking number: ${state.bookingNumber}`)}
+              href={whatsappLink(whatsapp, `Hi ${storeName}! I just booked a service. Booking number: ${state.bookingNumber}`)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex h-11 items-center gap-2 rounded-full bg-[#25D366] px-5 text-sm font-semibold text-ink"
@@ -73,9 +83,9 @@ export function BookingForm({
   return (
     <form action={action} className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Service" htmlFor="b-type">
+        <Field label="Service" error={e.serviceType} htmlFor="b-type">
           <Select id="b-type" name="serviceType" value={type} onChange={(ev) => setType(ev.target.value)}>
-            {SERVICE_TYPES.map((s) => (
+            {services.map((s) => (
               <option key={s.value} value={s.value}>
                 {s.label}
               </option>
@@ -108,7 +118,7 @@ export function BookingForm({
         <Field
           label="Pincode"
           error={pinError}
-          hint={pinChecked ? (pinOk ? "✓ We serve your area" : "Sorry, this pincode is outside our Greater Noida service area") : "Greater Noida only"}
+          hint={pinChecked ? (pinOk ? "✓ We serve your area" : "Sorry, we don't cover this pincode yet") : areaNote}
           htmlFor="b-pin"
         >
           <Input id="b-pin" name="pincode" inputMode="numeric" maxLength={6} required value={pin} onChange={(ev) => setPin(ev.target.value.replace(/\D/g, ""))} invalid={!!pinError || (pinChecked && !pinOk)} />
@@ -129,8 +139,8 @@ export function BookingForm({
           <Input id="b-date" name="preferredDate" type="date" min={today} defaultValue={state.values?.preferredDate ?? today} required invalid={!!e.preferredDate} />
         </Field>
         <Field label="Preferred time slot" error={e.preferredSlot} htmlFor="b-slot">
-          <Select id="b-slot" name="preferredSlot" defaultValue={state.values?.preferredSlot ?? SERVICE_SLOTS[0]} key={state.values?.preferredSlot}>
-            {SERVICE_SLOTS.map((s) => (
+          <Select id="b-slot" name="preferredSlot" defaultValue={state.values?.preferredSlot ?? slots[0]} key={state.values?.preferredSlot}>
+            {slots.map((s) => (
               <option key={s}>{s}</option>
             ))}
           </Select>
@@ -145,7 +155,7 @@ export function BookingForm({
           Book Service
         </SubmitButton>
         <p className="text-xs text-muted">
-          No payment now. We&apos;ll confirm by phone. See{" "}
+          {note} See{" "}
           <Link href="/services#faqs" className="underline">
             FAQs
           </Link>

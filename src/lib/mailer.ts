@@ -4,6 +4,10 @@ import path from "node:path";
 import { mkdir, writeFile } from "node:fs/promises";
 import nodemailer from "nodemailer";
 import { absoluteUrl } from "@/lib/utils";
+import { getSettings } from "@/lib/settings";
+
+/** Placeholder for the store name in subjects and templates; filled from Admin → Settings when the email is sent. */
+export const BRAND = "%%brand%%";
 import { formatINR } from "@/lib/format";
 
 let transporter: ReturnType<typeof nodemailer.createTransport> | null = null;
@@ -34,7 +38,20 @@ async function writeToOutbox(args: { to: string; subject: string; html: string }
   }
 }
 
-export async function sendMail(args: { to: string; subject: string; html: string; replyTo?: string }) {
+/** Fills the store name, tagline and contact details (Admin → Settings) into the shared email layout. */
+async function brand(args: { subject: string; html: string }) {
+  const { store } = await getSettings();
+  const contact = [store.email, store.phone].filter(Boolean).map(escapeHtml).join(" · ");
+  const fill = (s: string, html: boolean) =>
+    s
+      .replaceAll(BRAND, html ? escapeHtml(store.name) : store.name)
+      .replaceAll("%%tagline%%", escapeHtml(store.tagline))
+      .replaceAll("%%contact%%", contact);
+  return { subject: fill(args.subject, false), html: fill(args.html, true) };
+}
+
+export async function sendMail(input: { to: string; subject: string; html: string; replyTo?: string }) {
+  const args = { ...input, ...(await brand(input)) };
   await writeToOutbox(args);
   const t = getTransporter();
   if (!t) {
@@ -62,12 +79,12 @@ export function emailLayout(title: string, body: string) {
   return `<!doctype html><html><body style="margin:0;background:#f4f4f5;font-family:Inter,Arial,sans-serif;color:#0a0a0a">
   <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px">
   <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border-radius:16px;overflow:hidden">
-    <tr><td style="background:#0a0a0a;padding:20px 28px"><span style="font:700 20px Poppins,Arial,sans-serif;color:#fff;letter-spacing:1px">CARS<span style="color:#FFC800">APPO</span></span></td></tr>
+    <tr><td style="background:#0a0a0a;padding:20px 28px"><span style="font:700 20px Poppins,Arial,sans-serif;color:#FFC800;letter-spacing:1px;text-transform:uppercase">${BRAND}</span></td></tr>
     <tr><td style="padding:28px">
       <h1 style="font:600 20px Poppins,Arial,sans-serif;margin:0 0 16px">${escapeHtml(title)}</h1>
       ${body}
     </td></tr>
-    <tr><td style="padding:20px 28px;background:#fafafa;color:#71717a;font-size:12px">Carsappo · Everything Your Car Needs.<br/><a href="${absoluteUrl("/")}" style="color:#71717a">carsappo.com</a></td></tr>
+    <tr><td style="padding:20px 28px;background:#fafafa;color:#71717a;font-size:12px">${BRAND} · %%tagline%%<br/>%%contact%%<br/><a href="${absoluteUrl("/")}" style="color:#71717a">${new URL(absoluteUrl("/")).host}</a></td></tr>
   </table></td></tr></table></body></html>`;
 }
 

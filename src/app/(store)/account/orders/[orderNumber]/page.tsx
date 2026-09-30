@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { getAccessibleOrder } from "@/lib/order-access";
 import { getSettings } from "@/lib/settings";
 import { razorpayEnabled } from "@/lib/razorpay";
-import { isWithinReturnWindow } from "@/lib/orders";
+import { canCustomerCancel, isWithinReturnWindow } from "@/lib/orders";
 import { formatDate, formatDateTime, formatINR } from "@/lib/format";
 import { ORDER_STATUS_LABEL, PAYMENT_STATUS_LABEL, RETURN_STATUS_LABEL } from "@/lib/constants";
 import { OrderHistory, OrderProgress } from "@/components/order/timeline";
@@ -55,7 +55,7 @@ export default async function AccountOrderPage({ params }: PageProps<"/account/o
               <FileText className="size-4" /> Invoice
             </ButtonLink>
           )}
-          {(order.status === "PENDING" || order.status === "CONFIRMED") && <CancelOrderButton orderNumber={order.orderNumber} />}
+          {canCustomerCancel(order.status) && <CancelOrderButton orderNumber={order.orderNumber} />}
         </div>
       </div>
 

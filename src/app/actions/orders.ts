@@ -6,7 +6,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { getAccessibleOrder, rememberOrderAccess } from "@/lib/order-access";
-import { setOrderStatus } from "@/lib/orders";
+import { canCustomerCancel, setOrderStatus } from "@/lib/orders";
 import { refundRazorpayPayment, razorpayEnabled } from "@/lib/razorpay";
 import { cancelShiprocketOrder, shiprocketEnabled } from "@/lib/shiprocket";
 import { getSettings } from "@/lib/settings";
@@ -21,7 +21,7 @@ export async function cancelOrder(_: FormState, formData: FormData): Promise<For
   const token = String(formData.get("token") ?? "") || null;
   const order = await getAccessibleOrder(orderNumber, token);
   if (!order) return { message: "Order not found." };
-  if (order.status !== "PENDING" && order.status !== "CONFIRMED") {
+  if (!canCustomerCancel(order.status)) {
     return { message: "This order is already being packed or shipped. Please contact support to cancel." };
   }
 

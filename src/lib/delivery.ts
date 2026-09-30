@@ -1,31 +1,34 @@
 /**
  * Delivery-time estimates. Used for "Estimated delivery" on product, cart and checkout pages.
+ * Zones and day ranges come from Admin → Shipping → Delivery zones (defaults in src/lib/content.ts).
  * When Shiprocket is configured the pincode checker refines this with live courier ETDs.
  */
+import { DELIVERY_DEFAULTS } from "@/lib/content";
 
 type Zone = { name: string; minDays: number; maxDays: number };
+export type DeliveryConfig = typeof DELIVERY_DEFAULTS;
 
-const NCR_PREFIXES = ["110", "120", "121", "122", "124", "201", "203"];
-const METRO_PREFIXES = ["400", "401", "411", "560", "600", "700", "500", "380", "302", "226", "160", "141"];
+const prefixList = (prefixes: string) => prefixes.split(/[\s,]+/).filter((p) => /^\d{1,6}$/.test(p));
 
-export function zoneForPincode(pincode?: string | null): Zone {
-  if (!pincode || !/^\d{6}$/.test(pincode)) return { name: "India", minDays: 3, maxDays: 7 };
-  const p3 = pincode.slice(0, 3);
-  const p2 = pincode.slice(0, 2);
-  if (NCR_PREFIXES.includes(p3)) return { name: "Delhi NCR", minDays: 1, maxDays: 3 };
-  if (METRO_PREFIXES.includes(p3)) return { name: "Metro", minDays: 3, maxDays: 5 };
-  if (["78", "79", "18", "19"].includes(p2) || p3 === "744" || p3 === "682") {
-    return { name: "Remote", minDays: 6, maxDays: 10 };
+/** The zone whose pincode prefix matches most specifically; the "rest of India" range otherwise. */
+export function zoneForPincode(pincode?: string | null, config: DeliveryConfig = DELIVERY_DEFAULTS): Zone {
+  const rest = { name: config.restName, minDays: config.restMinDays, maxDays: config.restMaxDays };
+  if (!pincode || !/^\d{6}$/.test(pincode)) return { ...rest, name: "India" };
+  let best: { zone: Zone; length: number } | null = null;
+  for (const z of config.zones) {
+    for (const prefix of prefixList(z.prefixes)) {
+      if (pincode.startsWith(prefix) && (!best || prefix.length > best.length)) best = { zone: z, length: prefix.length };
+    }
   }
-  return { name: "Rest of India", minDays: 4, maxDays: 7 };
+  return best ? { name: best.zone.name, minDays: best.zone.minDays, maxDays: best.zone.maxDays } : rest;
 }
 
-function addBusinessDays(from: Date, days: number) {
+function addBusinessDays(from: Date, days: number, skipSundays: boolean) {
   const d = new Date(from);
   let added = 0;
   while (added < days) {
     d.setDate(d.getDate() + 1);
-    if (d.getDay() !== 0) added++; // couriers don't deliver on Sundays
+    if (!skipSundays || d.getDay() !== 0) added++; // most couriers don't deliver on Sundays
   }
   return d;
 }
@@ -38,8 +41,13 @@ export type DeliveryEstimate = {
   latest: string; // ISO
 };
 
-export function estimateDelivery(pincode?: string | null, dispatchDays = 1, override?: { minDays: number; maxDays: number }): DeliveryEstimate {
-  const zone = zoneForPincode(pincode);
+export function estimateDelivery(
+  pincode?: string | null,
+  dispatchDays = 1,
+  override?: { minDays: number; maxDays: number },
+  config: DeliveryConfig = DELIVERY_DEFAULTS,
+): DeliveryEstimate {
+  const zone = zoneForPincode(pincode, config);
   const minDays = (override?.minDays ?? zone.minDays) + dispatchDays;
   const maxDays = (override?.maxDays ?? zone.maxDays) + dispatchDays;
   const now = new Date();
@@ -47,7 +55,7 @@ export function estimateDelivery(pincode?: string | null, dispatchDays = 1, over
     zone: zone.name,
     minDays,
     maxDays,
-    earliest: addBusinessDays(now, minDays).toISOString(),
-    latest: addBusinessDays(now, maxDays).toISOString(),
+    earliest: addBusinessDays(now, minDays, config.skipSundays).toISOString(),
+    latest: addBusinessDays(now, maxDays, config.skipSundays).toISOString(),
   };
 }

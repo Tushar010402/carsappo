@@ -67,7 +67,7 @@ test.describe("SEO", () => {
 
   test("sitemap lists products, categories, posts and policies; robots.txt keeps private areas out", async ({ request }) => {
     const sitemap = await (await request.get("/sitemap.xml")).text();
-    for (const path of ["/shop", "/services", "/product/7d-premium-car-mats-custom-fit", "/category/mats", "/blog/7d-vs-5d-car-mats", "/policies/privacy-policy"]) {
+    for (const path of ["/shop", "/services", "/product/7d-premium-car-mats-custom-fit", "/category/mats", "/blog/7d-vs-5d-car-mats", "/policies/privacy-policy", "/faq"]) {
       expect(sitemap, path).toContain(`<loc>${BASE_URL}${path}</loc>`);
     }
     expect(sitemap).toContain("<image:loc>");

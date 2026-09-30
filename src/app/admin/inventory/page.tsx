@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Download } from "lucide-react";
+import { Download, Upload } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { formatINR } from "@/lib/format";
@@ -55,9 +55,14 @@ export default async function InventoryPage({ searchParams }: PageProps<"/admin/
         title="Inventory"
         description="Stock levels across the catalogue. Stock is deducted when an order is confirmed and restored on cancellation/return."
         actions={
-          <a href={exportHref} className={buttonClasses("outline", "sm")}>
-            <Download className="size-4" /> Export CSV
-          </a>
+          <>
+            <a href={exportHref} className={buttonClasses("outline", "sm")}>
+              <Download className="size-4" /> Export CSV
+            </a>
+            <Link href="/admin/inventory/import" className={buttonClasses("primary", "sm")}>
+              <Upload className="size-4" /> Bulk update
+            </Link>
+          </>
         }
       />
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

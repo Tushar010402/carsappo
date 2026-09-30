@@ -4,7 +4,8 @@ import { MessageCircle, Phone } from "lucide-react";
 import type { BookingStatus } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { BOOKING_STATUS_LABEL, serviceLabel } from "@/lib/constants";
+import { BOOKING_STATUS_LABEL } from "@/lib/constants";
+import { getSettings, serviceName } from "@/lib/settings";
 import { formatDate, formatDateTime, formatINR } from "@/lib/format";
 import { whatsappLink } from "@/lib/utils";
 import { updateBooking } from "@/app/admin/_actions/services";
@@ -18,8 +19,9 @@ export const metadata: Metadata = { title: "Booking" };
 export default async function BookingDetailPage({ params }: PageProps<"/admin/services/bookings/[id]">) {
   await requireAdmin();
   const { id } = await params;
-  const booking = await prisma.serviceBooking.findUnique({ where: { id }, include: { plan: true } });
+  const [booking, settings] = await Promise.all([prisma.serviceBooking.findUnique({ where: { id }, include: { plan: true } }), getSettings()]);
   if (!booking) notFound();
+  const service = serviceName(settings, booking.serviceType);
 
   return (
     <>
@@ -37,7 +39,7 @@ export default async function BookingDetailPage({ params }: PageProps<"/admin/se
               <Phone className="size-4" /> Call
             </a>
             <a
-              href={whatsappLink(booking.phone, `Hi ${booking.name}, this is Carsappo about your ${serviceLabel(booking.serviceType)} booking ${booking.bookingNumber}.`)}
+              href={whatsappLink(booking.phone, `Hi ${booking.name}, this is ${settings.store.name} about your ${service} booking ${booking.bookingNumber}.`)}
               target="_blank"
               rel="noopener noreferrer"
               className={buttonClasses("whatsapp", "sm")}
@@ -52,7 +54,7 @@ export default async function BookingDetailPage({ params }: PageProps<"/admin/se
           <Panel title="Service">
             <KeyValues
               items={[
-                ["Service", serviceLabel(booking.serviceType)],
+                ["Service", service],
                 ["Plan", booking.plan ? `${booking.plan.name} · ${formatINR(booking.plan.price)}${booking.plan.period === "MONTHLY" ? "/month" : ""}` : "—"],
                 ["Preferred start", formatDate(booking.preferredDate)],
                 ["Time slot", booking.preferredSlot],

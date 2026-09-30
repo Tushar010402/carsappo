@@ -25,3 +25,43 @@ export function csvResponse(filename: string, header: string[], rows: Cell[][]) 
 
 /** Paise → rupees with 2 decimals for spreadsheets. */
 export const csvMoney = (paise: number) => (paise / 100).toFixed(2);
+
+/** Parses CSV text (RFC 4180: quoted fields, "" escapes, CRLF/LF, optional BOM). Blank lines are dropped. */
+export function parseCsv(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = "";
+  let quoted = false;
+  const src = text.replace(/^﻿/, "");
+  for (let i = 0; i < src.length; i++) {
+    const ch = src[i];
+    if (quoted) {
+      if (ch === '"' && src[i + 1] === '"') {
+        cell += '"';
+        i++;
+      } else if (ch === '"') quoted = false;
+      else cell += ch;
+    } else if (ch === '"' && cell === "") quoted = true;
+    else if (ch === ",") {
+      row.push(cell);
+      cell = "";
+    } else if (ch === "\n" || ch === "\r") {
+      if (ch === "\r" && src[i + 1] === "\n") i++;
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = "";
+    } else cell += ch;
+  }
+  if (cell !== "" || row.length) {
+    row.push(cell);
+    rows.push(row);
+  }
+  return rows.filter((r) => r.some((c) => c.trim() !== ""));
+}
+
+/** Undoes the formula-injection guard `toCsv` adds ('=… → =…). */
+export function csvText(value: string | undefined) {
+  const s = (value ?? "").trim();
+  return /^'[=+\-@]/.test(s) ? s.slice(1) : s;
+}

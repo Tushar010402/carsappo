@@ -45,13 +45,13 @@ test.describe("Daily car cleaning services (Greater Noida only)", () => {
     await page.getByLabel("Mobile number").fill("9876501234");
     await page.getByLabel("Email (optional)").fill(email);
     await page.getByLabel("Pincode").fill("110001");
-    await expect(page.getByText("Sorry, this pincode is outside our Greater Noida service area")).toBeVisible();
+    await expect(page.getByText("Sorry, we don't cover this pincode yet")).toBeVisible();
     await page.getByLabel("Full address").fill("Tower 4, Flat 1203, Gaur City 2");
     await page.getByLabel("Car model").fill("Maruti Baleno");
     await page.getByLabel("Car number (optional)").fill("UP16 CD 4455");
     await page.getByLabel("Preferred time slot").selectOption("8:00 AM – 10:00 AM");
     await page.getByRole("button", { name: "Book Service" }).click();
-    await expect(page.getByText(/daily car cleaning is currently available only in Greater Noida/)).toBeVisible();
+    await expect(page.getByText(/we don.t clean cars at this pincode yet/)).toBeVisible();
     // Everything typed survives the failed submission.
     await expect(page.getByLabel("Full address")).toHaveValue("Tower 4, Flat 1203, Gaur City 2");
     await expect(page.getByLabel("Preferred time slot")).toHaveValue("8:00 AM – 10:00 AM");
@@ -171,6 +171,21 @@ test.describe("Content pages", () => {
     for (const slug of ["shipping-policy", "return-policy", "privacy-policy", "terms-and-conditions"]) {
       await expect(footer.locator(`a[href="/policies/${slug}"]`)).toHaveCount(1);
     }
+  });
+
+  test("FAQ page groups questions and is linked from the footer @mobile", async ({ page }) => {
+    await page.goto("/");
+    await page.locator("footer").getByRole("link", { name: "FAQs" }).click();
+    await expect(page).toHaveURL(/\/faq$/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Frequently asked questions");
+    for (const group of ["Orders & products", "Shipping, returns & payments", "Daily car cleaning"]) {
+      await expect(page.getByRole("heading", { level: 2, name: group })).toBeVisible();
+    }
+    const first = page.locator("main details").first();
+    await first.locator("summary").click();
+    await expect(first).toHaveAttribute("open", "");
+    const jsonLd = await page.locator('script[type="application/ld+json"]').allTextContents();
+    expect(jsonLd.some((j) => j.includes('"FAQPage"'))).toBe(true);
   });
 
   test("unknown pages show a helpful 404 with a way back @mobile", async ({ page }) => {

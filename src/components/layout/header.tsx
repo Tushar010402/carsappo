@@ -28,21 +28,22 @@ import { cn } from "@/lib/utils";
 
 export type NavCategory = { id: string; name: string; slug: string; icon: string | null; description: string | null };
 
-const NAV = [
-  { href: "/", label: "Home" },
-  { href: "/shop", label: "Shop", mega: true },
-  { href: "/services", label: "Services" },
-  { href: "/blog", label: "Blog" },
-  { href: "/about", label: "About" },
-  { href: "/contact", label: "Contact" },
-];
+export type HeaderNav = {
+  items: { label: string; href: string }[];
+  megaPromoTitle: string;
+  megaPromoText: string;
+  megaPromoLink: string;
+};
 
 export function Header({
   categories,
   user,
   announcement,
   logoUrl,
+  nav,
 }: {
+  /** Menu from Admin → Storefront → Navigation; the "/shop" item opens the category mega-menu. */
+  nav: HeaderNav;
   categories: NavCategory[];
   user: { name: string; role: "CUSTOMER" | "ADMIN" } | null;
   announcement?: string;
@@ -61,6 +62,7 @@ export function Header({
   const wishHydrated = useWishlist((s) => s.hydrated);
   const vehicle = useGarage((s) => s.vehicle);
   const count = cartCount(items);
+  const NAV = nav.items.map((i) => ({ ...i, mega: i.href === "/shop" }));
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -118,7 +120,7 @@ export function Header({
           <nav className="ml-10 hidden items-center gap-1 lg:flex" aria-label="Main">
             {NAV.map((item) =>
               item.mega ? (
-                <div key={item.href} className="relative" onMouseEnter={() => setMegaOpen(true)} onMouseLeave={() => setMegaOpen(false)}>
+                <div key={`${item.href}|${item.label}`} className="relative" onMouseEnter={() => setMegaOpen(true)} onMouseLeave={() => setMegaOpen(false)}>
                   <Link
                     href={item.href}
                     className={cn(
@@ -147,11 +149,11 @@ export function Header({
                         <div className="flex flex-col justify-between rounded-2xl bg-ink p-5 text-white">
                           <div>
                             <CarFront className="size-7 text-brand" />
-                            <p className="mt-3 font-display text-lg leading-snug font-semibold">Shop by Vehicle</p>
-                            <p className="mt-1 text-xs text-zinc-400">Find accessories that fit your exact car.</p>
+                            <p className="mt-3 font-display text-lg leading-snug font-semibold">{nav.megaPromoTitle}</p>
+                            <p className="mt-1 text-xs text-zinc-400">{nav.megaPromoText}</p>
                           </div>
                           <Link href="/#shop-by-vehicle" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-brand">
-                            Select your car <ArrowRight className="size-4" />
+                            {nav.megaPromoLink} <ArrowRight className="size-4" />
                           </Link>
                         </div>
                       </div>
@@ -160,7 +162,7 @@ export function Header({
                 </div>
               ) : (
                 <Link
-                  key={item.href}
+                  key={`${item.href}|${item.label}`}
                   href={item.href}
                   className={cn(
                     "rounded-full px-3.5 py-2 text-sm font-medium transition hover:bg-mist",
@@ -278,7 +280,7 @@ export function Header({
               <nav className="flex flex-col" aria-label="Mobile">
                 {NAV.map((item) => (
                   <Link
-                    key={item.href}
+                    key={`${item.href}|${item.label}`}
                     href={item.href}
                     className={cn("rounded-xl px-3 py-3 font-display text-lg font-medium", isActive(item.href) ? "bg-mist" : "")}
                   >

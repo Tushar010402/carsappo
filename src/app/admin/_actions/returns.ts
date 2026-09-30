@@ -8,7 +8,7 @@ import { setOrderStatus } from "@/lib/orders";
 import { razorpayEnabled, refundRazorpayPayment } from "@/lib/razorpay";
 import { formatINR, rupeesToPaise } from "@/lib/format";
 import { RETURN_STATUS_LABEL } from "@/lib/constants";
-import { sendMail, simpleEmail } from "@/lib/mailer";
+import { BRAND, sendMail, simpleEmail } from "@/lib/mailer";
 import { absoluteUrl } from "@/lib/utils";
 import { checkbox, formObject, idSchema, optionalText } from "@/lib/admin/form";
 import { appendNote, done, failed, invalid, revalidateAdmin, revalidateStore } from "@/lib/admin/server";
@@ -99,7 +99,7 @@ export async function updateReturn(_: ActionState, formData: FormData): Promise<
     }
     await sendMail({
       to: order.email,
-      subject: `${title} — Carsappo`,
+      subject: `${title} — ${BRAND}`,
       html: simpleEmail(title, [body], { label: "View order", href: absoluteUrl(`/order/${order.orderNumber}?t=${order.accessToken}`) }),
     }).catch((e) => console.error("[return mail]", e));
   }

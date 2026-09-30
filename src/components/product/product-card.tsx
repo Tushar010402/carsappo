@@ -10,7 +10,8 @@ import { cn, isRecent } from "@/lib/utils";
 export function ProductCard({ product, className, priority }: { product: ProductCardData; className?: string; priority?: boolean }) {
   const [img1, img2] = product.images;
   const isNew = isRecent(product.createdAt);
-  const lowStock = product.stock > 0 && product.stock <= 5;
+  // "Only N left" appears at or below the product's own low-stock alert level (Admin → Products).
+  const lowStock = product.stock > 0 && product.stock <= Math.max(product.lowStockAlert, 0);
 
   return (
     <article className={cn("group relative flex flex-col", className)}>

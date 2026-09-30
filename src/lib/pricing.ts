@@ -158,7 +158,7 @@ export async function computeQuote(input: QuoteInput): Promise<Quote> {
     amountToFreeShipping: freeShipping || subtotal === 0 ? 0 : ship.freeShippingThreshold - afterDiscount,
     taxTotal,
     total: afterDiscount + shippingFee + codFee,
-    delivery: estimateDelivery(input.pincode, ship.dispatchDays),
+    delivery: estimateDelivery(input.pincode, ship.dispatchDays, undefined, settings.delivery),
     issues: [...new Set(issues)],
     removed,
   };

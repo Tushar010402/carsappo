@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const estimate = estimateDelivery(pin, shipping.dispatchDays, override);
+  const estimate = estimateDelivery(pin, shipping.dispatchDays, override, settings.delivery);
   return NextResponse.json(
     { pincode: pin, serviceable, codAvailable, ...estimate, freeShippingThreshold: shipping.freeShippingThreshold },
     { headers: { "Cache-Control": "public, max-age=3600" } },

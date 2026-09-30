@@ -67,6 +67,10 @@ export default async function ProductPage({ params }: PageProps<"/product/[slug]
   const cartProduct = toCartProduct(product);
   const { shipping, store } = settings;
   const inStock = product.stock > 0;
+  const lowStock = inStock && product.stock <= Math.max(product.lowStockAlert, 0);
+  const d = settings.delivery;
+  const days = (min: number, max: number) => (min === max ? `${min} day${min === 1 ? "" : "s"}` : `${min}–${max} days`);
+  const deliveryTimes = [...d.zones.map((z) => `${z.name} ${days(z.minDays, z.maxDays)}`), `${d.restName} ${days(d.restMinDays, d.restMaxDays)}`].join(" · ");
 
   // Group compatible vehicles by brand for display.
   const compatByMake = new Map<string, { name: string; detail: string }[]>();
@@ -77,7 +81,7 @@ export default async function ProductPage({ params }: PageProps<"/product/[slug]
     compatByMake.set(c.vehicleModel.make.name, list);
   }
 
-  const waText = `Hi Carsappo! I'm interested in "${product.name}" (${formatINR(product.price)}). ${absoluteUrl(`/product/${product.slug}`)}`;
+  const waText = `Hi ${store.name}! I'm interested in "${product.name}" (${formatINR(product.price)}). ${absoluteUrl(`/product/${product.slug}`)}`;
   const faqs = product.faqs.map((f) => ({ q: f.question, a: f.answer }));
   const totalReviews = distribution.reduce((a, d) => a + d._count._all, 0);
 
@@ -147,8 +151,8 @@ export default async function ProductPage({ params }: PageProps<"/product/[slug]
               />
             </div>
 
-            <p className={`mt-5 text-sm font-semibold ${inStock ? (product.stock <= 5 ? "text-amber-700" : "text-success") : "text-danger"}`}>
-              {inStock ? (product.stock <= 5 ? `Hurry — only ${product.stock} left in stock` : "In stock · ready to ship") : "Currently out of stock"}
+            <p className={`mt-5 text-sm font-semibold ${inStock ? (lowStock ? "text-amber-700" : "text-success") : "text-danger"}`}>
+              {inStock ? (lowStock ? `Hurry — only ${product.stock} left in stock` : "In stock · ready to ship") : "Currently out of stock"}
             </p>
 
             <div id="buy-box" className="mt-4 space-y-3">
@@ -319,7 +323,7 @@ export default async function ProductPage({ params }: PageProps<"/product/[slug]
               <ul className="mt-3 space-y-2 text-sm text-zinc-700">
                 <li>Dispatched within {shipping.dispatchDays === 1 ? "24 hours" : `${shipping.dispatchDays} days`} on business days.</li>
                 <li>Free shipping on orders above {formatINR(shipping.freeShippingThreshold)}; otherwise {formatINR(shipping.flatShippingFee)}.</li>
-                <li>Delhi NCR 1–3 days · Metros 3–5 days · Rest of India 4–7 days.</li>
+                <li>{deliveryTimes}.</li>
                 {shipping.codEnabled && <li>Cash on delivery available (+{formatINR(shipping.codFee)}).</li>}
               </ul>
               <Link href="/policies/shipping-policy" className="mt-3 inline-block text-sm font-medium underline">

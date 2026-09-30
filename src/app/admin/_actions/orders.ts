@@ -19,7 +19,7 @@ import {
 import { getSettings } from "@/lib/settings";
 import { formatINR, rupeesToPaise } from "@/lib/format";
 import { ORDER_STATUS_LABEL } from "@/lib/constants";
-import { sendMail, simpleEmail } from "@/lib/mailer";
+import { BRAND, sendMail, simpleEmail } from "@/lib/mailer";
 import { absoluteUrl } from "@/lib/utils";
 import { checkbox, formObject, idSchema, linkField, optionalDate, optionalText } from "@/lib/admin/form";
 import { appendNote, dbError, done, failed, invalid, revalidateAdmin, revalidateStore } from "@/lib/admin/server";
@@ -177,7 +177,7 @@ export async function refundOrder(_: ActionState, formData: FormData): Promise<A
   }
   await sendMail({
     to: order.email,
-    subject: `Refund initiated for order ${order.orderNumber} — Carsappo`,
+    subject: `Refund initiated for order ${order.orderNumber} — ${BRAND}`,
     html: simpleEmail(
       "Your refund is on its way",
       [`We've initiated a refund of ${formatINR(amount)} for order ${order.orderNumber}.`, "Refunds usually reach the original payment method in 5–7 working days."],

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { MapPin } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { getSettings, servicePincodes } from "@/lib/settings";
+import { getSettings, renderText, servicePincodes, serviceTypes } from "@/lib/settings";
 import { pageMetadata } from "@/lib/seo";
 import { firstParam } from "@/lib/utils";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
@@ -36,7 +36,12 @@ export default async function BookServicePage({ searchParams }: PageProps<"/serv
           defaultType={firstParam(sp.type)}
           defaultPlan={firstParam(sp.plan)}
           whatsapp={settings.store.whatsapp}
+          storeName={settings.store.name}
           pincodes={servicePincodes(settings)}
+          services={serviceTypes(settings).map((t) => ({ value: t.value, label: t.label }))}
+          slots={settings.services.timeSlots}
+          note={renderText(settings, settings.services.bookingNote)}
+          areaNote={settings.services.serviceAreaNote}
         />
       </div>
     </div>

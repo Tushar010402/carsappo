@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { Fragment } from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { getSettings } from "@/lib/settings";
+import { getSettings, homeSections, serviceTypes, textRenderer } from "@/lib/settings";
+import { formatINR } from "@/lib/format";
 import { getNavCategories, getProductsForSection, getVehicleMakes } from "@/lib/catalog";
 import { getGoogleReviews, getInstagramPosts } from "@/lib/social";
 import { Hero } from "@/components/home/hero";
@@ -21,40 +23,36 @@ import { SectionHeader } from "@/components/ui/container";
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function HomePage() {
-  const [settings, categories, makes, bestSellers, latest, premium, trending, banners, testimonials, cheapestPlan, instagram, google, modelCount] =
-    await Promise.all([
-      getSettings(),
-      getNavCategories(),
-      getVehicleMakes(),
-      getProductsForSection({ isBestSeller: true }, [{ salesCount: "desc" }], 12),
-      getProductsForSection({}, [{ createdAt: "desc" }], 8),
-      getProductsForSection({ isPremium: true }, [{ price: "desc" }], 8),
-      getProductsForSection({ isTrending: true }, [{ salesCount: "desc" }], 8),
-      prisma.banner.findMany({ where: { isActive: true, placement: { in: ["HOME_HERO", "HOME_PROMO"] } }, orderBy: { sortOrder: "asc" } }),
-      prisma.testimonial.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } }),
-      prisma.servicePlan.findFirst({ where: { isActive: true, period: "MONTHLY" }, orderBy: { price: "asc" }, select: { price: true } }),
-      getInstagramPosts(8),
-      getGoogleReviews(),
-      prisma.vehicleModel.count({ where: { type: "CAR" } }),
-    ]);
+  const settings = await getSettings();
+  const home = settings.home;
+  const [categories, makes, bestSellers, latest, premium, trending, banners, testimonials, cheapestPlan, instagram, google, modelCount] = await Promise.all([
+    getNavCategories(),
+    getVehicleMakes(),
+    getProductsForSection({ isBestSeller: true }, [{ salesCount: "desc" }], home.bestSellers.count),
+    getProductsForSection({}, [{ createdAt: "desc" }], home.featured.count),
+    getProductsForSection({ isPremium: true }, [{ price: "desc" }], home.featured.count),
+    getProductsForSection({ isTrending: true }, [{ salesCount: "desc" }], home.featured.count),
+    prisma.banner.findMany({ where: { isActive: true, placement: { in: ["HOME_HERO", "HOME_PROMO"] } }, orderBy: { sortOrder: "asc" } }),
+    prisma.testimonial.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } }),
+    prisma.servicePlan.findFirst({ where: { isActive: true, period: "MONTHLY" }, orderBy: { price: "asc" }, select: { price: true } }),
+    getInstagramPosts(8),
+    getGoogleReviews(),
+    prisma.vehicleModel.count({ where: { type: "CAR" } }),
+  ]);
 
+  const t = textRenderer(settings);
   const heroBanner = banners.find((b) => b.placement === "HOME_HERO");
   const promo = banners.find((b) => b.placement === "HOME_PROMO");
   const instaFallback = [...bestSellers, ...trending].flatMap((p) => p.images.slice(0, 1).map((i) => i.url));
+  const hero = home.hero;
+  const threshold = settings.shipping.freeShippingThreshold;
 
-  return (
-    <>
-      {/* Hero Banner + Search Bar */}
-      <Hero banner={heroBanner} modelCount={modelCount} />
-
-      {/* Shop by Vehicle */}
+  // Each homepage section; order and visibility come from Admin → Storefront → Homepage.
+  const sections: Record<string, React.ReactNode> = {
+    vehicle: (
       <section id="shop-by-vehicle" className="scroll-mt-24 bg-mist">
         <div className="container-x py-16 sm:py-20">
-          <SectionHeader
-            eyebrow="Shop by Vehicle"
-            title="Accessories that fit your car. Exactly."
-            subtitle="Select your brand, model, year and fuel type — we'll show only compatible products like 7D mats, seat covers, dashboard covers and organisers."
-          />
+          <SectionHeader eyebrow={t(home.vehicle.eyebrow)} title={t(home.vehicle.title)} subtitle={t(home.vehicle.subtitle)} />
           <VehicleSelector makes={makes} />
           <div className="mt-6 flex flex-wrap gap-2">
             {makes.slice(0, 10).map((m) => (
@@ -69,72 +67,92 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* Shop by Category */}
+    ),
+    categories: (
       <section className="container-x py-20 sm:py-24">
-        <SectionHeader eyebrow="Shop by Category" title="Everything for your car, in one place." href="/shop" linkLabel="Shop all" />
+        <SectionHeader eyebrow={t(home.categories.eyebrow)} title={t(home.categories.title)} href="/shop" linkLabel={t(home.categories.linkLabel)} />
         <CategoryGrid categories={categories} />
       </section>
-
-      {/* Best Sellers — large slider */}
-      {bestSellers.length > 0 && (
-        <section className="bg-ink text-white">
-          <div className="container-x py-20 sm:py-24">
-            <SectionHeader dark eyebrow="Best Sellers" title="Most loved by Carsappo customers." href="/shop?collection=best-sellers" />
-            <Rail dark label="Best sellers" itemClassName="sm:!w-[40%] lg:!w-[31.5%]">
-              {bestSellers.map((p, i) => (
-                <div key={p.id} className="rounded-[28px] bg-white p-3 text-ink sm:p-4">
-                  <ProductCard product={p} priority={i < 3} />
-                </div>
-              ))}
-            </Rail>
-          </div>
-        </section>
-      )}
-
-      {promo && (
-        <section className="container-x pt-20 sm:pt-24">
-          <PromoBanner banner={promo} />
-        </section>
-      )}
-
-      {/* Featured Products */}
-      <section className="container-x py-20 sm:py-24">
-        <SectionHeader eyebrow="Featured Products" title="Fresh, premium and trending." href="/shop" />
-        <Tabs
-          tabs={[
-            { id: "latest", label: "Latest Products", content: <ProductGrid products={latest} /> },
-            { id: "premium", label: "Premium Collection", content: <ProductGrid products={premium} /> },
-            { id: "trending", label: "Trending Products", content: <ProductGrid products={trending} /> },
-          ]}
-        />
-      </section>
-
-      {/* Why Carsappo */}
-      <section className="bg-mist">
+    ),
+    bestSellers: bestSellers.length > 0 && (
+      <section className="bg-ink text-white">
         <div className="container-x py-20 sm:py-24">
-          <SectionHeader eyebrow="Why Carsappo" title="A car care brand you can trust." />
-          <WhyCarsappo />
+          <SectionHeader dark eyebrow={t(home.bestSellers.eyebrow)} title={t(home.bestSellers.title)} href="/shop?collection=best-sellers" />
+          <Rail dark label={t(home.bestSellers.eyebrow)} itemClassName="sm:!w-[40%] lg:!w-[31.5%]">
+            {bestSellers.map((p, i) => (
+              <div key={p.id} className="rounded-[28px] bg-white p-3 text-ink sm:p-4">
+                <ProductCard product={p} priority={i < 3} />
+              </div>
+            ))}
+          </Rail>
         </div>
       </section>
+    ),
+    promo: promo && (
+      <section className="container-x pt-20 sm:pt-24">
+        <PromoBanner banner={promo} />
+      </section>
+    ),
+    featured: (
+      <section className="container-x py-20 sm:py-24">
+        <SectionHeader eyebrow={t(home.featured.eyebrow)} title={t(home.featured.title)} href="/shop" />
+        <Tabs
+          tabs={[
+            { id: "latest", label: t(home.featured.latestLabel), content: <ProductGrid products={latest} /> },
+            { id: "premium", label: t(home.featured.premiumLabel), content: <ProductGrid products={premium} /> },
+            { id: "trending", label: t(home.featured.trendingLabel), content: <ProductGrid products={trending} /> },
+          ].filter((tab) => tab.label)}
+        />
+      </section>
+    ),
+    why: home.why.points.length > 0 && (
+      <section className="bg-mist">
+        <div className="container-x py-20 sm:py-24">
+          <SectionHeader eyebrow={t(home.why.eyebrow)} title={t(home.why.title)} />
+          <WhyCarsappo points={home.why.points.map((p) => ({ icon: p.icon, title: t(p.title), text: t(p.text) }))} />
+        </div>
+      </section>
+    ),
+    reviews: (testimonials.length > 0 || google) && (
+      <section className="container-x py-20 sm:py-24">
+        <SectionHeader eyebrow={t(home.reviews.eyebrow)} title={t(home.reviews.title)} />
+        <CustomerReviews testimonials={testimonials} google={google} googleUrl={settings.social.googleReviewsUrl} />
+      </section>
+    ),
+    cleaning: (
+      <CleaningSection
+        startingPrice={cheapestPlan?.price ?? null}
+        content={{ ...home.cleaning, badge: t(home.cleaning.badge), title: t(home.cleaning.title), text: t(home.cleaning.text), bullets: home.cleaning.bullets.map(t) }}
+        services={serviceTypes(settings)}
+      />
+    ),
+    instagram: settings.social.instagram && (
+      <section className="container-x py-20 sm:py-24">
+        <InstagramFeed
+          posts={instagram}
+          profileUrl={settings.social.instagram}
+          fallbackImages={instaFallback}
+          title={t(home.instagram.title)}
+          subtitle={t(home.instagram.subtitle)}
+        />
+      </section>
+    ),
+  };
 
-      {/* Customer Reviews */}
-      {(testimonials.length > 0 || google) && (
-        <section className="container-x py-20 sm:py-24">
-          <SectionHeader eyebrow="Customer Reviews" title="Real cars. Real customers." />
-          <CustomerReviews testimonials={testimonials} google={google} googleUrl={settings.social.googleReviewsUrl} />
-        </section>
-      )}
-
-      {/* Daily Car Cleaning — secondary service */}
-      <CleaningSection startingPrice={cheapestPlan?.price ?? null} />
-
-      {/* Instagram Feed */}
-      {settings.social.instagram && (
-        <section className="container-x py-20 sm:py-24">
-          <InstagramFeed posts={instagram} profileUrl={settings.social.instagram} fallbackImages={instaFallback} />
-        </section>
-      )}
+  return (
+    <>
+      {/* Hero Banner + Search Bar */}
+      <Hero
+        banner={heroBanner}
+        modelCount={modelCount}
+        content={{ ...hero, eyebrow: t(hero.eyebrow), title: t(hero.title), titleHighlight: t(hero.titleHighlight), bullets: hero.bullets.map(t), trustLine: t(hero.trustLine) }}
+        freeShippingLabel={threshold > 0 ? `On orders above ${formatINR(threshold)}` : "On every order"}
+      />
+      {homeSections(settings)
+        .filter((s) => s.visible && sections[s.id])
+        .map((s) => (
+          <Fragment key={s.id}>{sections[s.id]}</Fragment>
+        ))}
     </>
   );
 }
