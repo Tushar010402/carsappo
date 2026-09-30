@@ -109,9 +109,12 @@ CI (`.github/workflows/ci.yml`) runs lint, typecheck, unit tests, build and the 
 ### Client preview / staging (Vercel)
 
 ```bash
-./scripts/deploy-preview.sh                                   # no accounts: temporary DB + deployment (~24h, claimable)
-VERCEL_TOKEN=… DATABASE_URL=postgres://… ./scripts/deploy-preview.sh   # permanent preview in your Vercel account
+VERCEL_TOKEN=… DATABASE_URL=postgres://… ./scripts/deploy-preview.sh   # preview in your (free) Vercel account
 ```
+
+Without `DATABASE_URL` the script creates a temporary Prisma Postgres database (deleted after 24 h unless claimed).
+Or skip the script: import the GitHub repo on vercel.com, add a Postgres database from the project's Storage tab,
+and set `AUTH_SECRET`, `SITE_ENV=staging`, `SEED_ON_BUILD=true`, `SEED_DEMO=true` and `ADMIN_PASSWORD`.
 
 The preview runs with demo data, `SITE_ENV=staging` (robots.txt blocks everything and every response carries
 `X-Robots-Tag: noindex`) and prints the admin login. `vercel.json` builds in Singapore (`sin1`), next to a
