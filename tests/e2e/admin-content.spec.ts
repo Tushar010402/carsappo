@@ -126,8 +126,13 @@ test.describe("Admin — content, settings and SEO", () => {
       // Staff activity is never tracked.
       requested.length = 0;
       await page.goto("/admin");
-      await page.waitForLoadState("networkidle");
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      // A negative check has no event to wait for; "networkidle" is unreliable here because link
+      // prefetches cancelled by the navigation never report completion. Give client scripts a moment.
+      await page.waitForTimeout(1500);
       expect(requested.filter((u) => /googletagmanager|facebook\.net/.test(u))).toEqual([]);
+      expect(await page.evaluate(() => typeof (window as unknown as { fbq?: unknown }).fbq)).toBe("undefined");
+      await expect(page.locator('script[src*="googletagmanager"], script[src*="fbevents"]')).toHaveCount(0);
     } finally {
       await page.goto("/admin/seo");
       await page.getByLabel(/Google Analytics 4/).fill("");
