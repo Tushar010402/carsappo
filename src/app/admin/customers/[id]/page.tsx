@@ -68,7 +68,7 @@ export default async function CustomerDetailPage({ params }: PageProps<"/admin/c
         <StatCard label="Average order" value={<Money paise={paidOrders ? Math.round(spent / paidOrders) : 0} />} />
         <StatCard label="Reviews · wishlist" value={`${user._count.reviews} · ${user._count.wishlist}`} />
       </div>
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <Panel title="Orders" flush>
           <Table minWidth={640}>
             <THead>

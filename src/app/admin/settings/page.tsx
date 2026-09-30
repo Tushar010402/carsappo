@@ -26,7 +26,7 @@ export default async function SettingsPage() {
   return (
     <>
       <PageHeader title="Settings" description="Store details used across the site, emails and GST invoices." />
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <Panel title="Store details">
           <AdminForm action={saveStoreSettings} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">

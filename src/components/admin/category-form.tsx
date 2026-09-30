@@ -11,7 +11,7 @@ export function CategoryForm({ category, parents }: { category?: Category | null
   return (
     <AdminForm action={saveCategory} className="space-y-6">
       {category && <input type="hidden" name="id" value={category.id} />}
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0 space-y-6">
           <Panel title="Details" bodyClassName="space-y-4">
             <SlugFields defaultName={category?.name} defaultSlug={category?.slug} prefix="/category/" namePlaceholder="e.g. Seat Covers" />

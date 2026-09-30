@@ -13,7 +13,7 @@ export function PostForm({ post, categories }: { post?: Post | null; categories:
   return (
     <AdminForm action={savePost} className="space-y-6">
       {post && <input type="hidden" name="id" value={post.id} />}
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0 space-y-6">
           <Panel title="Post" bodyClassName="space-y-4">
             <SlugFields nameField="title" nameLabel="Title" defaultName={post?.title} defaultSlug={post?.slug} prefix="/blog/" namePlaceholder="How to clean leather seat covers" />

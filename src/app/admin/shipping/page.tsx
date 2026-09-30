@@ -57,7 +57,7 @@ export default async function ShippingPage() {
   return (
     <>
       <PageHeader title="Shipping" description="Delivery charges, Cash on Delivery rules, delivery zones and courier integration." />
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
         <Panel title="Shipping rules" description="Amounts in rupees (GST inclusive).">
           <AdminForm action={saveShippingSettings} className="space-y-5">
             <div className="grid gap-4 sm:grid-cols-2">

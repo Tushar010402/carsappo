@@ -64,7 +64,7 @@ export default async function OrderDetailPage({ params }: PageProps<"/admin/orde
         }
       />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="min-w-0 space-y-6">
           <Panel title={`Items (${order.items.length})`} flush>
             <ul className="divide-y divide-line">

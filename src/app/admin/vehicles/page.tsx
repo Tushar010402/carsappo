@@ -105,7 +105,7 @@ export default async function VehiclesPage({ searchParams }: PageProps<"/admin/v
           </FormDialog>
         }
       />
-      <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
         <Panel title="Makes" flush>
           <ul className="max-h-[70vh] overflow-y-auto p-2">
             {makes.length === 0 && <li className="px-3 py-8 text-center text-sm text-muted">No makes yet.</li>}

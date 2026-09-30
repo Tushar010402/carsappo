@@ -25,7 +25,7 @@ export default async function TeamPage() {
   return (
     <>
       <PageHeader title="Team" description="People who can sign in to this admin panel. Every admin has full access." />
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
         <Panel title={`Admins (${admins.length})`} flush>
           <Table minWidth={560}>
             <THead>

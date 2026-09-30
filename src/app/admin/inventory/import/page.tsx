@@ -24,7 +24,7 @@ export default async function InventoryImportPage() {
           </a>
         }
       />
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <Panel title="Upload CSV">
           <AdminForm action={importInventory} className="space-y-4">
             <FormField name="file" label="CSV file" hint={`Up to ${IMPORT_LIMIT_ROWS.toLocaleString("en-IN")} rows, under 1 MB.`}>

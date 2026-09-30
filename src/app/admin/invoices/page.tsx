@@ -127,7 +127,7 @@ export default async function InvoicesPage({ searchParams }: PageProps<"/admin/i
           </Table>
           {data.truncated && <p className="border-t border-line px-4 py-3 text-xs text-amber-700">Showing the first 5,000 invoices — narrow the date range.</p>}
         </Panel>
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:items-start">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:items-start">
           <Panel title="Tax by rate" flush>
             <table className="w-full text-sm">
               <thead className="bg-mist/70 text-left text-[11px] font-semibold tracking-wider text-muted uppercase">

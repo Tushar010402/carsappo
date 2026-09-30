@@ -54,7 +54,7 @@ export default async function CategoriesPage() {
           </ButtonLink>
         }
       />
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <Panel title="Categories" flush>
           <Table minWidth={620}>
             <THead>

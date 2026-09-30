@@ -127,7 +127,7 @@ export default async function AdminDashboard() {
         />
       </Panel>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <Panel title="Recent orders" actions={<ViewAll href="/admin/orders" />} flush>
           <Table minWidth={620}>
             <THead>

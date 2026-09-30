@@ -360,25 +360,58 @@ test.describe("Admin — services, delivery, team and bulk updates", () => {
   });
 });
 
-test("website editors fit on a phone without sideways scrolling", async ({ page }) => {
-  test.setTimeout(120_000);
+test("every admin screen fits on a phone without sideways scrolling", async ({ page }) => {
+  test.setTimeout(180_000);
   await page.setViewportSize({ width: 390, height: 844 });
+  const [order, customer, booking] = await Promise.all([
+    db.order.findFirstOrThrow({ select: { id: true } }),
+    db.user.findFirstOrThrow({ where: { role: "CUSTOMER" }, select: { id: true } }),
+    db.serviceBooking.findFirst({ select: { id: true } }),
+  ]);
   const overflowing: string[] = [];
   for (const path of [
+    "/admin",
+    "/admin/analytics",
+    "/admin/orders",
+    `/admin/orders/${order.id}`,
+    "/admin/returns",
+    "/admin/invoices",
+    "/admin/customers",
+    `/admin/customers/${customer.id}`,
+    "/admin/coupons",
+    "/admin/products",
+    "/admin/products/new",
+    "/admin/categories",
+    "/admin/inventory",
+    "/admin/inventory/import",
+    "/admin/vehicles",
+    "/admin/reviews",
     "/admin/storefront/home",
     "/admin/storefront/navigation",
     "/admin/pages",
     "/admin/pages/about",
     "/admin/pages/contact",
     "/admin/pages/new",
+    "/admin/banners",
+    "/admin/blog",
+    "/admin/blog/new",
+    "/admin/testimonials",
+    "/admin/faqs",
+    "/admin/services",
+    "/admin/services?tab=plans",
     "/admin/services?tab=content",
+    "/admin/services?tab=area",
+    ...(booking ? [`/admin/services/bookings/${booking.id}`] : []),
     "/admin/shipping",
+    "/admin/seo",
+    "/admin/messages",
     "/admin/team",
-    "/admin/inventory/import",
+    "/admin/settings",
   ]) {
     await page.goto(path);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    if (!(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1))) overflowing.push(path);
+    const width = await page.evaluate(() => document.documentElement.scrollWidth);
+    if (width > 391) overflowing.push(`${path} (${width}px)`);
   }
   expect(overflowing).toEqual([]);
 });

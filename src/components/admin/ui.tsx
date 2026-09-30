@@ -74,7 +74,9 @@ export function Panel({
 
 export function Table({ children, className, minWidth = 720 }: { children: ReactNode; className?: string; minWidth?: number }) {
   return (
-    <div className="overflow-x-auto">
+    // `relative` keeps absolutely positioned descendants (sr-only labels, checkboxes) inside the
+    // scroll area; otherwise they stretch the whole page sideways on phones.
+    <div className="relative overflow-x-auto">
       <table className={cn("w-full border-collapse text-sm", className)} style={{ minWidth }}>
         {children}
       </table>

@@ -16,7 +16,7 @@ export function PageForm({ page, kind, builtIn }: { page?: Page | null; kind: Pa
       <AdminForm action={savePage} className="space-y-6">
         {page && <input type="hidden" name="id" value={page.id} />}
         <input type="hidden" name="kind" value={kind} />
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
           <div className="min-w-0 space-y-6">
             <Panel title={kind === "POLICY" ? "Policy" : "Page"} bodyClassName="space-y-4">
               {builtIn ? (
